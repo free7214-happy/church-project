@@ -395,26 +395,39 @@ const App: React.FC = () => {
               justify-content: center;
               width: 210mm;
               height: 297mm;
+              overflow: hidden;
             }
             .print-container {
-              width: 100%;
-              max-width: 190mm;
-              padding: 20mm;
+              width: 210mm;
+              height: 297mm;
+              padding: 15mm;
               display: flex;
               flex-direction: column;
               justify-content: center;
               box-sizing: border-box;
+              background: white;
+            }
+            .report-card {
+              border: 1px solid #e5e7eb;
+              border-radius: 20px;
+              padding: 2rem;
+              width: 100%;
+              box-shadow: none !important;
             }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #e5e7eb; }
             .no-print { display: none !important; }
-            .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
+            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
             input { border: none !important; background: transparent !important; pointer-events: none !important; }
+            .summary-section { background-color: #f8fafc !important; }
+            .final-total { background-color: #0f172a !important; color: white !important; }
           </style>
         </head>
         <body>
           <div class="print-container">
-            ${cloned.innerHTML}
+            <div class="report-card">
+              ${cloned.innerHTML}
+            </div>
           </div>
           <script>
             window.onload = () => {
@@ -635,7 +648,7 @@ const App: React.FC = () => {
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
-                  <div className="border-b border-stone-300">
+                  <div className="border-b border-stone-300 summary-section">
                     <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
@@ -673,7 +686,7 @@ const App: React.FC = () => {
                       <span className="font-black text-stone-800 text-lg">{totalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="bg-stone-800 text-white p-5 flex justify-between items-center rounded-b-xl">
+                  <div className="bg-stone-900 text-white p-5 flex justify-between items-center rounded-b-xl final-total">
                     <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
                     <span className="font-black text-2xl">{currentNetBalance.toLocaleString()}</span>
                   </div>
@@ -696,7 +709,7 @@ const App: React.FC = () => {
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
-                  <div className="border-b border-stone-300">
+                  <div className="border-b border-stone-300 summary-section">
                     <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
@@ -724,7 +737,7 @@ const App: React.FC = () => {
                                 inputMode="numeric"
                                 value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
                                 onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[100px] max-w-[140px] ml-auto"
+                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[100px] max-w-[140px] ml-auto whitespace-nowrap"
                                 onFocus={(e) => e.target.select()}
                               />
                             </td>
@@ -745,8 +758,8 @@ const App: React.FC = () => {
                       <span className="font-black text-stone-800 text-lg">{localReportTotalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="bg-indigo-900 text-white p-5 flex justify-between items-center">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
+                  <div className="bg-slate-900 text-white p-5 flex justify-between items-center rounded-b-xl final-total">
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집)</span>
                     <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
                   <div className="p-4 bg-stone-100 flex justify-center border-t border-stone-200 rounded-b-xl no-print">
