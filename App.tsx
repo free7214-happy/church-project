@@ -700,7 +700,7 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            {/* 2. Editable Report Table */}
+            {/* 2. Editable Report Table (Input fields for BOTH name and amount) */}
             <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border border-indigo-100 rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
                 <div className="text-center mb-10">
@@ -785,7 +785,7 @@ const App: React.FC = () => {
                     setData(prev => ({
                       ...prev,
                       report2Expenses: { ...prev.expenses },
-                      report2Names: {}, 
+                      report2Names: {}, // Reset customized names
                       lastUpdated: new Date().toISOString()
                     }));
                   }}
@@ -837,19 +837,17 @@ const App: React.FC = () => {
                 <h3 className="text-lg font-black text-stone-800">장부 기록 현황 (원본)</h3>
               </div>
               <div className="space-y-4">
-                {/* 우측 끝선 정렬: pr-1 적용 */}
                 <div className="flex justify-between items-center py-2 border-b border-stone-50">
                   <span className="text-sm font-bold text-stone-500">누적 수입 (헌금)</span>
-                  <span className="font-black text-emerald-600 text-right pr-1">+ ₩{totalAccumulatedOffering.toLocaleString()}</span>
+                  <span className="font-black text-emerald-600 text-right">+ ₩{totalAccumulatedOffering.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-stone-50">
                   <span className="text-sm font-bold text-stone-500">누적 지출 (원본)</span>
-                  <span className="font-black text-rose-400 text-right pr-1">- ₩{totalExpenses.toLocaleString()}</span>
+                  <span className="font-black text-rose-400 text-right">- ₩{totalExpenses.toLocaleString()}</span>
                 </div>
-                {/* 최종 잔액 레이아웃 변경: pr-1로 끝선 정합성 맞춤 */}
-                <div className="flex justify-between items-center py-4 bg-stone-50 px-3 rounded-xl mt-2">
+                <div className="flex justify-between items-center py-2 bg-stone-50 px-3 rounded-xl mt-2">
                   <span className="text-sm font-black text-stone-600">장부상 최종 잔액</span>
-                  <span className="font-black text-stone-800 text-right pr-1">₩{currentNetBalance.toLocaleString()}</span>
+                  <span className="font-black text-stone-800 text-right">₩{currentNetBalance.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -870,7 +868,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="p-4 bg-orange-50/30 border border-orange-100/50 rounded-2xl flex justify-between items-center">
                     <span className="text-sm font-bold text-stone-600">현금 총액</span>
-                    <span className="text-lg font-black text-stone-800 text-right pr-1">₩{manualCashTotal.toLocaleString()}</span>
+                    <span className="text-lg font-black text-stone-800 text-right">₩{manualCashTotal.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="space-y-3 pt-2">
@@ -887,6 +885,7 @@ const App: React.FC = () => {
                     {data.bankDeposits && data.bankDeposits.length > 0 ? (
                       data.bankDeposits.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl group overflow-hidden">
+                          {/* 항목명 클릭 시 삭제 기능 실행 */}
                           <div 
                             onClick={() => setModal({ type: 'delete_bank_record', isOpen: true, detailIndex: idx, category: item.name })}
                             className="flex items-center gap-3 flex-1 min-w-0 mr-4 cursor-pointer hover:bg-stone-100 p-1 rounded-lg transition-colors"
@@ -899,6 +898,7 @@ const App: React.FC = () => {
                               <span className="text-[10px] font-mono text-stone-300 font-bold uppercase tracking-tighter ml-2 shrink-0">{item.date}</span>
                             </div>
                           </div>
+                          {/* 금액 우측 정렬 유지 및 순잔액과 끝선 일치 */}
                           <div className="shrink-0 flex items-center pr-1">
                             <span className={`text-[13px] font-black text-right min-w-[100px] ${item.type === 'withdraw' ? 'text-rose-500' : 'text-emerald-600'}`}>
                               {item.type === 'withdraw' ? '-' : '+'}₩{item.amount.toLocaleString()}
@@ -914,14 +914,14 @@ const App: React.FC = () => {
                   </div>
                   <div className="p-4 bg-indigo-50/30 border border-indigo-100/50 rounded-2xl flex justify-between items-center mt-4">
                     <span className="text-sm font-bold text-stone-600">통장 순잔액</span>
-                    <span className="text-lg font-black text-indigo-600 text-right pr-1">
+                    <span className="text-lg font-black text-indigo-600 text-right flex-1 pr-1">
                       {totalBankNet >= 0 ? '+' : ''}₩{totalBankNet.toLocaleString()}
                     </span>
                   </div>
                 </div>
                 <div className="pt-4 mt-2 border-t border-stone-100 flex justify-between items-center">
                   <span className="text-sm font-black text-stone-800">최종 실제 자산 합계</span>
-                  <span className="text-xl font-black text-rose-500 text-right pr-1">₩{physicalCashTotal.toLocaleString()}</span>
+                  <span className="text-xl font-black text-rose-500 text-right flex-1 pr-1">₩{physicalCashTotal.toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -951,23 +951,9 @@ const App: React.FC = () => {
         })}
       </nav>
 
-      {/* Modal Section (Unchanged logic for brevity, keeping context intact) */}
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
           <div className="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            {/* Modal components go here */}
-            {modal.type === 'delete_bank_record' && (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div>
-                <h3 className="text-xl font-black text-stone-800 mb-2">통장 내역 삭제</h3>
-                <p className="text-stone-500 text-sm mb-8">"{modal.category}" 통장 기록을 삭제하시겠습니까?</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => removeBankRecord(modal.detailIndex!)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
-                </div>
-              </div>
-            )}
-            {/* ... other modal types remain the same but included in the full file ... */}
             {modal.type === 'save' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1001,6 +987,7 @@ const App: React.FC = () => {
                 </div>
               </div>
             )}
+
             {modal.type === 'export_filename' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
@@ -1026,63 +1013,42 @@ const App: React.FC = () => {
                 </button>
               </div>
             )}
-            {modal.type === 'counting' && (
+
+            {(modal.type === 'detail' || modal.type === 'personal_detail') && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h3 className="text-xl font-black text-stone-800">{modal.day} {modal.time}</h3>
-                    <p className="text-xs font-bold text-rose-400 uppercase tracking-widest">계수표 입력</p>
+                    <h3 className="text-xl font-black text-stone-800">{modal.category}</h3>
+                    <p className={`text-xs font-bold uppercase tracking-widest ${modal.type === 'personal_detail' ? 'text-indigo-400' : 'text-rose-400'}`}>내역 추가</p>
                   </div>
-                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full active:bg-stone-100 transition-colors"><X size={20} /></button>
                 </div>
-                <div className="space-y-3">
-                  {DENOMINATIONS.map(denom => (
-                    <div key={denom} className="flex items-center justify-between">
-                      <span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span>
-                      <div className="flex items-center gap-3">
-                        <input 
-                          type="number" 
-                          inputMode="numeric"
-                          value={data.counting[modal.day!]?.[modal.time!]?.[denom] || ''} 
-                          onChange={(e) => handleUpdateCounting(modal.day!, modal.time!, denom, e.target.value)}
-                          className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400 transition-all"
-                          placeholder="0"
-                        />
-                        <span className="text-xs font-bold text-stone-300">매</span>
-                      </div>
-                    </div>
-                  ))}
-                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-rose-400 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">입력 완료</button>
-                </div>
+                <DetailForm 
+                  onAdd={(name, amt, syncCat) => handleUpdateDetail(modal.category!, name, amt, modal.type === 'personal_detail', syncCat)} 
+                  isPersonal={modal.type === 'personal_detail'}
+                  churchCategories={Object.keys(data.expenses)}
+                />
               </div>
             )}
-            {modal.type === 'edit_cash' && (
+
+            {modal.type === 'edit_personal_detail' && (
               <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                   <h3 className="text-xl font-black text-stone-800">수기 현금 계수</h3>
-                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                 <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">{modal.category}</h3>
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">내역 편집</p>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full active:bg-stone-100 transition-colors"><X size={20} /></button>
                 </div>
-                <div className="space-y-3">
-                   {DENOMINATIONS.map(denom => (
-                     <div key={denom} className="flex items-center justify-between">
-                        <span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span>
-                        <div className="flex items-center gap-3">
-                          <input 
-                            type="number" 
-                            inputMode="numeric"
-                            value={data.counting['__manual__']?.['__cash__']?.[denom] || ''} 
-                            onChange={(e) => handleUpdateManualCash(denom, e.target.value)}
-                            className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400"
-                            placeholder="0"
-                          />
-                          <span className="text-xs font-bold text-stone-300">매</span>
-                        </div>
-                     </div>
-                   ))}
-                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-stone-800 text-white font-black rounded-2xl active:scale-95 transition-transform">저장 완료</button>
-                </div>
+                <EditDetailForm 
+                   initialName={data.personalExpenseDetails[modal.category!][modal.detailIndex!].name}
+                   initialAmount={data.personalExpenseDetails[modal.category!][modal.detailIndex!].amount}
+                   churchCategories={Object.keys(data.expenses)}
+                   onSave={(name, amt, syncCat) => handleEditPersonalDetail(modal.category!, modal.detailIndex!, name, amt, syncCat)}
+                />
               </div>
             )}
+            
             {modal.type === 'add_bank_deposit' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1111,35 +1077,209 @@ const App: React.FC = () => {
                     </>
                   ) : (
                     <div className="space-y-4">
-                      <select 
-                        value={selectedPersonalCat} 
-                        onChange={e => setSelectedPersonalCat(e.target.value)} 
-                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none"
-                      >
-                        <option value="">출금 항목 선택</option>
-                        {Object.keys(data.personalExpenses || {}).map(cat => (
-                          <option key={cat} value={cat}>{cat} (₩{(data.personalExpenses[cat] || 0).toLocaleString()})</option>
-                        ))}
-                      </select>
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">출금할 개인지출 항목 선택</p>
+                        <select 
+                          value={selectedPersonalCat} 
+                          onChange={e => setSelectedPersonalCat(e.target.value)} 
+                          className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-800 appearance-none transition-colors focus:border-stone-200"
+                        >
+                          <option value="">출금 항목 선택</option>
+                          {Object.keys(data.personalExpenses || {}).map(cat => (
+                            <option key={cat} value={cat}>
+                              {cat} (₩{(data.personalExpenses[cat] || 0).toLocaleString()})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      {selectedPersonalCat && (
+                        <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
+                          <p className="text-[11px] font-bold text-rose-400 uppercase tracking-widest mb-1">출금 예정 금액</p>
+                          <p className="text-xl font-black text-rose-600">₩{(data.personalExpenses[selectedPersonalCat] || 0).toLocaleString()}</p>
+                          <p className="text-[10px] text-rose-400 mt-2">* 해당 항목의 전체 합계가 출금 처리됩니다.</p>
+                        </div>
+                      )}
                     </div>
                   )}
+
                   <button onClick={() => {
                     const nameInput = document.getElementById('bankName') as HTMLInputElement | null;
                     const name = nameInput ? nameInput.value : '';
                     const amount = parseInt(bankAmountDisplay.replace(/,/g, ''));
+                    
+                    if (bankType === 'withdraw' && !selectedPersonalCat) {
+                      alert('출금 항목을 선택해주세요.');
+                      return;
+                    }
+                    if (bankType === 'deposit' && (!name || !amount)) {
+                      alert('명칭과 금액을 입력해주세요.');
+                      return;
+                    }
                     handleAddBankRecord(name, amount, bankType, selectedPersonalCat);
-                  }} className={`w-full py-4 text-white font-black rounded-2xl shadow-lg active:scale-95 ${bankType === 'withdraw' ? 'bg-rose-500' : 'bg-emerald-500'}`}>저장</button>
+                  }} className={`w-full py-4 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-transform ${bankType === 'withdraw' ? 'bg-rose-500 shadow-rose-100' : 'bg-emerald-500 shadow-emerald-100'}`}>
+                    {bankType === 'withdraw' ? '출금 기록 저장' : '입금 기록 저장'}
+                  </button>
                 </div>
               </div>
             )}
+
+            {modal.type === 'delete_bank_record' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div>
+                <h3 className="text-xl font-black text-stone-800 mb-2">통장 내역 삭제</h3>
+                <p className="text-stone-500 text-sm mb-8">"{modal.category}" 통장 기록을 삭제하시겠습니까?</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => removeBankRecord(modal.detailIndex!)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'counting' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">{modal.day} {modal.time}</h3>
+                    <p className="text-xs font-bold text-rose-400 uppercase tracking-widest">계수표 입력</p>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+                <div className="space-y-3">
+                  {DENOMINATIONS.map(denom => (
+                    <div key={denom} className="flex items-center justify-between">
+                      <span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="number" 
+                          inputMode="numeric"
+                          value={data.counting[modal.day!]?.[modal.time!]?.[denom] || ''} 
+                          onChange={(e) => handleUpdateCounting(modal.day!, modal.time!, denom, e.target.value)}
+                          className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400 transition-all"
+                          placeholder="0"
+                        />
+                        <span className="text-xs font-bold text-stone-300">매</span>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-8 pt-6 border-t border-stone-100 flex justify-between items-center">
+                    <span className="text-sm font-bold text-stone-600">항목 합계</span>
+                    <span className="text-2xl font-black text-rose-500">₩{getCountingTotal(modal.day!, modal.time!).toLocaleString()}</span>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-rose-400 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">입력 완료</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'edit_cash' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                   <h3 className="text-xl font-black text-stone-800">수기 현금 계수</h3>
+                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+                <div className="space-y-3">
+                   {DENOMINATIONS.map(denom => (
+                     <div key={denom} className="flex items-center justify-between">
+                        <span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span>
+                        <div className="flex items-center gap-3">
+                          <input 
+                            type="number" 
+                            inputMode="numeric"
+                            value={data.counting['__manual__']?.['__cash__']?.[denom] || ''} 
+                            onChange={(e) => handleUpdateManualCash(denom, e.target.value)}
+                            className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400"
+                            placeholder="0"
+                          />
+                          <span className="text-xs font-bold text-stone-300">매</span>
+                        </div>
+                     </div>
+                   ))}
+                   <div className="mt-8 pt-6 border-t border-stone-100 flex justify-between items-center">
+                    <span className="text-sm font-bold text-stone-600">현금 총액</span>
+                    <span className="text-2xl font-black text-rose-500">₩{manualCashTotal.toLocaleString()}</span>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-stone-800 text-white font-black rounded-2xl active:scale-95 transition-transform">저장 완료</button>
+                </div>
+              </div>
+            )}
+
             {modal.type === 'reset' && (
               <div className="p-8 text-center">
                 <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><RotateCcw size={32} /></div>
                 <h3 className="text-xl font-black text-stone-800 mb-2">전체 초기화</h3>
-                <p className="text-stone-500 text-sm mb-8">모든 재정 데이터가 삭제됩니다.</p>
+                <p className="text-stone-500 text-sm mb-8">모든 재정 데이터가 삭제됩니다.<br/>이 작업은 되돌릴 수 없습니다.</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl">취소</button>
-                  <button onClick={resetAllData} className="py-4 bg-rose-500 text-white font-bold rounded-2xl">삭제</button>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={resetAllData} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button>
+                </div>
+              </div>
+            )}
+            
+            {modal.type === 'rename' && (
+              <div className="p-6">
+                <h3 className="text-xl font-black text-stone-800 mb-4">이름 변경</h3>
+                <input id="renameInput" type="text" defaultValue={modal.oldName} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-stone-300" autoFocus />
+                <div className="flex gap-2">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => handleRenameCategory(modal.oldName!, (document.getElementById('renameInput') as HTMLInputElement).value, modal.isPersonal)} className="flex-1 py-4 bg-amber-400 text-white font-bold rounded-2xl active:bg-amber-500 shadow-lg shadow-amber-100">변경</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'delete_category' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div>
+                <h3 className="text-xl font-black text-stone-800 mb-2">항목 삭제</h3>
+                <p className="text-stone-500 text-sm mb-8">"{modal.category}" 항목을 삭제하시겠습니까?</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => handleDeleteCategory(modal.category!, false)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'delete_detail' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div>
+                <h3 className="text-xl font-black text-stone-800 mb-2">내역 삭제</h3>
+                <p className="text-stone-500 text-sm mb-8">선택한 상세 내역을 삭제하시겠습니까?</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => handleRemoveDetail(modal.category!, modal.detailIndex!, modal.isPersonal)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'add_category' && (
+              <div className="p-6">
+                <h3 className="text-xl font-black text-stone-800 mb-4">새 지출 항목</h3>
+                <input id="newCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-rose-400" placeholder="항목 이름" autoFocus />
+                <div className="flex gap-2">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => handleAddCategory((document.getElementById('newCat') as HTMLInputElement).value, false)} className="flex-1 py-4 bg-rose-400 text-white font-bold rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">추가</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'add_personal_category' && (
+              <div className="p-6">
+                <h3 className="text-xl font-black text-stone-800 mb-4">새 개인 항목</h3>
+                <input id="newPersonalCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-indigo-400" placeholder="항목 이름" autoFocus />
+                <div className="flex gap-2">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => handleAddCategory((document.getElementById('newPersonalCat') as HTMLInputElement).value, true)} className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-transform">추가</button>
+                </div>
+              </div>
+            )}
+            
+            {modal.type === 'delete_personal_category' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div>
+                <h3 className="text-xl font-black text-stone-800 mb-2">개인 항목 삭제</h3>
+                <p className="text-stone-500 text-sm mb-8">"{modal.category}" 개인 항목을 삭제하시겠습니까?</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
                 </div>
               </div>
             )}
@@ -1153,6 +1293,16 @@ const App: React.FC = () => {
 const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: string, amt: number, syncCat?: string) => void, isPersonal: boolean, churchCategories: string[] }) => {
   const [name, setName] = useState('');
   const [amountDisplay, setAmountDisplay] = useState('');
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value === '') {
+      setAmountDisplay('');
+      return;
+    }
+    setAmountDisplay(Number(value).toLocaleString());
+  };
+
   const [syncCat, setSyncCat] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1160,20 +1310,93 @@ const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: str
     if (!name.trim() || !amountDisplay) return;
     const numericAmount = parseInt(amountDisplay.replace(/,/g, ''));
     onAdd(name, numericAmount, syncCat);
-    setName(''); setAmountDisplay(''); setSyncCat('');
+    setName('');
+    setAmountDisplay('');
+    setSyncCat('');
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl outline-none" required />
-      <input type="text" inputMode="numeric" value={amountDisplay} onChange={e => setAmountDisplay(e.target.value.replace(/[^0-9]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ","))} placeholder="금액" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl outline-none" required />
+      <input 
+        type="text" 
+        value={name} 
+        onChange={e => setName(e.target.value)} 
+        placeholder="항목 명칭 (예: 꽃꽂이, 간식비)" 
+        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" 
+        required 
+      />
+      <input 
+        type="text" 
+        inputMode="numeric" 
+        value={amountDisplay} 
+        onChange={handleAmountChange} 
+        placeholder="금액 (예: 50,000)" 
+        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" 
+        required 
+      />
       {isPersonal && (
-        <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl outline-none">
-          <option value="">연결 안함</option>
+        <div className="space-y-2">
+          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결</p>
+          <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
+            <option value="">연결 안함</option>
+            {churchCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+        </div>
+      )}
+      <button type="submit" className={`w-full py-4 text-white font-black rounded-2xl shadow-lg transition-all active:scale-95 ${isPersonal ? 'bg-indigo-500 shadow-indigo-100' : 'bg-rose-400 shadow-rose-100'}`}>추가하기</button>
+    </form>
+  );
+};
+
+const EditDetailForm = ({ initialName, initialAmount, churchCategories, onSave }: { initialName: string, initialAmount: number, churchCategories: string[], onSave: (name: string, amt: number, syncCat?: string) => void }) => {
+  const [name, setName] = useState(initialName);
+  const [amountDisplay, setAmountDisplay] = useState(initialAmount.toLocaleString());
+  const [syncCat, setSyncCat] = useState('');
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value === '') {
+      setAmountDisplay('');
+      return;
+    }
+    setAmountDisplay(Number(value).toLocaleString());
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !amountDisplay) return;
+    const numericAmount = parseInt(amountDisplay.replace(/,/g, ''));
+    onSave(name, numericAmount, syncCat);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <input 
+        type="text" 
+        value={name} 
+        onChange={e => setName(e.target.value)} 
+        placeholder="항목 명칭" 
+        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" 
+        required 
+        autoFocus
+      />
+      <input 
+        type="text" 
+        inputMode="numeric" 
+        value={amountDisplay} 
+        onChange={handleAmountChange} 
+        placeholder="금액" 
+        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" 
+        required 
+      />
+      <div className="space-y-2">
+        <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결 (수정)</p>
+        <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
+          <option value="">기존 연결 유지/안함</option>
           {churchCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
         </select>
-      )}
-      <button type="submit" className={`w-full py-4 text-white font-black rounded-2xl ${isPersonal ? 'bg-indigo-500' : 'bg-rose-400'}`}>추가</button>
+      </div>
+      <button type="submit" className="w-full py-4 bg-indigo-500 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 transition-all active:scale-95">수정 완료</button>
     </form>
   );
 };
