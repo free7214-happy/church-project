@@ -5,7 +5,7 @@ import {
   ChevronRight, X, RotateCcw, CheckCircle2,
   User, Edit3, Landmark, Wallet, ArrowDownRight,
   AlertCircle, ArrowUpRight,
-  Users, TrendingUp, Info, Calendar, Download
+  Users, TrendingUp, Info, Calendar, Download, Printer
 } from 'lucide-react';
 import { TabType, OfferingData, ModalConfig, ExpenseDetail } from './types';
 import { DAYS, TIMES, DENOMINATIONS, INITIAL_EXPENSE_CATEGORIES, STORAGE_KEY } from './constants';
@@ -69,6 +69,7 @@ const App: React.FC = () => {
   const getDayTotalAttendance = (day: string) => TIMES.reduce((sum, time) => sum + Number(getAttendanceTotal(day, time)), 0);
 
   const totalAccumulatedOffering = DAYS.reduce((sum: number, day: string) => sum + Number(getDayTotalIncome(day)), 0);
+  // Fix: Cast val to number explicitly to avoid '+' operator error on 'unknown' types
   const totalAttendanceAll = DAYS.reduce((sum: number, day: string) => {
     const dayAttendance = Object.values(data.attendance[day] || {}).reduce((acc: number, val: unknown) => acc + (Number(val) || 0), 0);
     return sum + dayAttendance;
@@ -77,6 +78,7 @@ const App: React.FC = () => {
   
   const totalPersonalExpenses = Object.values(data.personalExpenses || {}).reduce((sum: number, val: number) => sum + (Number(val) || 0), 0);
   const totalBankNet = (data.bankDeposits || []).reduce((sum, item) => item.type === 'withdraw' ? sum - item.amount : sum + item.amount, 0);
+  // Fix: Cast value q to number explicitly to avoid '+' operator error on 'unknown' types
   const manualCashTotal = Object.entries(data.counting['__manual__']?.['__cash__'] || {}).reduce((sum: number, [d, q]: [string, unknown]) => sum + (Number(d) * (Number(q) || 0)), 0);
   const physicalCashTotal = manualCashTotal + totalBankNet;
   const currentNetBalance = Number(totalAccumulatedOffering) - Number(totalExpenses);
@@ -114,7 +116,7 @@ const App: React.FC = () => {
       if (!next.counting['__manual__']) next.counting['__manual__'] = {};
       if (!next.counting['__manual__']['__cash__']) next.counting['__manual__']['__cash__'] = {};
       next.counting['__manual__']['__cash__'][denom] = qty;
-      const newTotal = Object.entries(next.counting['__manual__']['__cash__']).reduce((sum, [d, q]) => sum + (Number(d) * (Number(q as number) || 0)), 0);
+      const newTotal = Object.entries(next.counting['__manual__']['__cash__']).reduce((sum, [d, q]) => sum + (Number(d) * (Number(q) || 0)), 0);
       return { ...next, manualCash: newTotal, lastUpdated: new Date().toISOString() };
     });
   };
@@ -350,6 +352,10 @@ const App: React.FC = () => {
     setLocalReportExpenses(prev => ({ ...prev, [cat]: val }));
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="flex flex-col min-h-screen max-w-md mx-auto bg-[#fffbf2] text-stone-700 relative">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-orange-100 p-5 flex justify-between items-center no-print shadow-sm">
@@ -431,7 +437,7 @@ const App: React.FC = () => {
                 <div className="space-y-1">
                   {TIMES.map(time => {
                     if (!isTimeValid(day, time)) return null;
-                    const attendanceVal = data.attendance[day]?.[time] || 0;
+                    const attendanceVal = Number(data.attendance[day]?.[time] || 0);
                     return (
                       <div key={time} className="flex items-center py-2 border-t border-stone-50 first:border-t-0">
                         <span className="text-[13px] font-bold text-stone-600 w-20">{time}</span>
@@ -548,6 +554,7 @@ const App: React.FC = () => {
 
         {activeTab === TabType.REPORT && (
           <div className="space-y-10">
+            {/* Printable Area Start */}
             <div id="printable-report" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] print:p-0 print:border-0 print:shadow-none min-w-[320px]">
               <div className="text-center mb-10">
                 <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
@@ -598,6 +605,15 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
+            {/* Printable Area End */}
+
+            <button 
+              onClick={handlePrint}
+              className="w-full py-5 bg-rose-500 text-white font-black rounded-3xl shadow-xl shadow-rose-100 flex items-center justify-center gap-3 active:scale-95 transition-all no-print"
+            >
+              <Printer size={20} />
+              PDF 보고서 내보내기 (출력)
+            </button>
 
             <div className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] no-print relative">
               <div className="text-center mb-10">
@@ -826,7 +842,7 @@ const App: React.FC = () => {
       </nav>
 
       {modal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
           <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             {modal.type === 'save' && (
               <div className="p-6">
