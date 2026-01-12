@@ -766,7 +766,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
                   <div className="bg-indigo-900 text-white p-5 flex justify-between items-center rounded-b-xl">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
                     <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
                 </div>
