@@ -399,7 +399,7 @@ const App: React.FC = () => {
             .print-container {
               width: 100%;
               max-width: 190mm;
-              padding: 20mm;
+              padding: 10mm;
               display: flex;
               flex-direction: column;
               justify-content: center;
@@ -410,6 +410,13 @@ const App: React.FC = () => {
             .no-print { display: none !important; }
             .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
             input { border: none !important; background: transparent !important; pointer-events: none !important; }
+            #report-original, #report-editable {
+              border: none !important;
+              box-shadow: none !important;
+              padding: 0 !important;
+              margin: 0 !important;
+              width: 100% !important;
+            }
           </style>
         </head>
         <body>
@@ -692,7 +699,7 @@ const App: React.FC = () => {
             <div className="space-y-3">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] relative">
                 <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
+                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집용)</h2>
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
@@ -724,7 +731,7 @@ const App: React.FC = () => {
                                 inputMode="numeric"
                                 value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
                                 onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[100px] max-w-[140px] ml-auto"
+                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-6 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[150px] max-w-[150px] ml-auto"
                                 onFocus={(e) => e.target.select()}
                               />
                             </td>
@@ -746,7 +753,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
                   <div className="bg-indigo-900 text-white p-5 flex justify-between items-center">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
                     <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
                   <div className="p-4 bg-stone-100 flex justify-center border-t border-stone-200 rounded-b-xl no-print">
