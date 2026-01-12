@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Calculator, Receipt, FileText, 
   Save, Trash2, Plus, FolderOpen,
-  ChevronRight, X, RotateCcw, CheckCircle2,
-  User, Edit3, Landmark, Wallet, ArrowDownRight,
-  AlertCircle, ArrowUpRight,
-  Users, TrendingUp, Info, Calendar, Download, Printer
+  X, RotateCcw, User, Edit3, Landmark, 
+  Wallet, ArrowDownRight, ArrowUpRight,
+  Users, TrendingUp, Download, Printer
 } from 'lucide-react';
 import { TabType, OfferingData, ModalConfig, ExpenseDetail } from './types';
 import { DAYS, TIMES, DENOMINATIONS, INITIAL_EXPENSE_CATEGORIES, STORAGE_KEY } from './constants';
@@ -317,15 +316,12 @@ const App: React.FC = () => {
     setModal({ ...modal, isOpen: false });
   };
 
-  const getReportExpenses = () => {
-    const expenses = { ...data.expenses };
+  const getReportExpenses = (sourceData: Record<string, number>) => {
     const result: Array<{cat: string, val: number}> = [];
-    
-    if (expenses['강사사례'] !== undefined) {
-      result.push({ cat: '강사사례', val: Number(expenses['강사사례']) || 0 });
+    if (sourceData['강사사례'] !== undefined) {
+      result.push({ cat: '강사사례', val: Number(sourceData['강사사례']) || 0 });
     }
-    
-    Object.entries(expenses).forEach(([cat, val]) => {
+    Object.entries(sourceData).forEach(([cat, val]) => {
       if (cat === '강사사례') return;
       result.push({ cat, val: val as number });
     });
@@ -350,10 +346,14 @@ const App: React.FC = () => {
     setLocalReportExpenses(prev => ({ ...prev, [cat]: val }));
   };
 
-  const handlePrintTarget = (id: string, title: string) => {
-    const content = document.getElementById(id);
-    if (!content) return;
-    
+  const generatePDFReport = (isEditable: boolean) => {
+    const income = totalAccumulatedOffering;
+    const expenseData = isEditable ? localReportExpenses : data.expenses;
+    const expenseTotal = isEditable ? localReportTotalExpenses : totalExpenses;
+    const balance = income - expenseTotal;
+    const reportTitle = isEditable ? "연합성회 재정결산서 (편집본)" : "연합성회 재정결산서 (원본)";
+    const items = getReportExpenses(expenseData);
+
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -365,66 +365,132 @@ const App: React.FC = () => {
     
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
-    
-    const cloned = content.cloneNode(true) as HTMLElement;
-    cloned.querySelectorAll('.no-print').forEach(el => el.remove());
-
-    // Convert inputs to spans for correct PDF rendering
-    cloned.querySelectorAll('input').forEach(inp => {
-      const span = doc.createElement('span');
-      span.textContent = (inp as HTMLInputElement).value;
-      span.style.fontWeight = 'bold';
-      inp.parentNode?.replaceChild(span, inp);
-    });
 
     doc.write(`
+      <!DOCTYPE html>
       <html>
         <head>
-          <title>${title}</title>
+          <title>${reportTitle}</title>
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { 
-              size: A4; 
-              margin: 0; 
-            }
+            @page { size: A4; margin: 0; }
             body { 
               font-family: 'Pretendard', sans-serif; 
-              margin: 0;
-              padding: 0;
-              background: white; 
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact; 
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 210mm;
-              height: 297mm;
+              margin: 0; padding: 0; background: #fff;
+              width: 210mm; height: 297mm;
+              display: flex; align-items: center; justify-content: center;
             }
-            .print-container {
-              width: 100%;
-              max-width: 190mm;
-              padding: 15mm;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              box-sizing: border-box;
+            .page-container {
+              width: 170mm;
+              padding: 20mm 0;
+              display: flex; flex-direction: column;
             }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; table-layout: fixed; }
-            th, td { 
-              border: 1px solid #000; 
-              padding: 12px 10px; 
-              text-align: center;
-              word-break: break-all;
+            .header { text-align: center; margin-bottom: 40px; }
+            .header h1 { font-size: 32px; font-weight: 800; color: #111; letter-spacing: -1px; margin-bottom: 8px; }
+            .header p { font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600; letter-spacing: 2px; }
+            
+            .summary-card {
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 16px;
+              padding: 24px;
+              display: grid;
+              grid-template-cols: repeat(3, 1fr);
+              gap: 20px;
+              margin-bottom: 32px;
             }
-            th { background-color: #f8fafc !important; font-weight: 800; }
-            .no-print { display: none !important; }
-            .amount-text { font-family: monospace; font-weight: 800; text-align: right; }
+            .summary-item { text-align: center; }
+            .summary-label { font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 4px; display: block; }
+            .summary-value { font-size: 18px; font-weight: 800; color: #0f172a; }
+            .summary-value.income { color: #e11d48; }
+
+            .report-table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+            .report-table th { 
+              background: #f1f5f9; 
+              border: 1px solid #cbd5e1; 
+              padding: 12px 16px; 
+              font-size: 13px; font-weight: 800; color: #334155;
+              text-align: left;
+            }
+            .report-table td { 
+              border: 1px solid #e2e8f0; 
+              padding: 12px 16px; 
+              font-size: 14px; font-weight: 600; color: #1e293b; 
+            }
+            .report-table .text-right { text-align: right; }
+            .report-table .row-even { background: #fafafa; }
+            
+            .footer-settlement {
+              border-top: 2px solid #0f172a;
+              padding-top: 20px;
+              display: flex; justify-content: space-between; align-items: flex-end;
+            }
+            .final-balance-label { font-size: 14px; font-weight: 800; color: #475569; }
+            .final-balance-value { font-size: 36px; font-weight: 800; color: #0f172a; line-height: 1; }
+            
+            .signature-area {
+              margin-top: 60px;
+              display: flex; justify-content: flex-end; gap: 40px;
+              font-weight: 800; color: #475569; font-size: 14px;
+            }
+            .sign-box { border-bottom: 1px solid #94a3b8; width: 100px; height: 30px; display: inline-block; margin-left: 8px; }
           </style>
         </head>
         <body>
-          <div class="print-container">
-            ${cloned.innerHTML}
+          <div class="page-container">
+            <div class="header">
+              <h1>${reportTitle}</h1>
+              <p>Accounting Report for Church Assembly</p>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-item">
+                <span class="summary-label">총 수입 (Income)</span>
+                <span class="summary-value income">${income.toLocaleString()}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">총 지출 (Expense)</span>
+                <span class="summary-value">${expenseTotal.toLocaleString()}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">현 잔액 (Balance)</span>
+                <span class="summary-value">${balance.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th style="width: 60%">지출 항목 (Expense Category)</th>
+                  <th style="width: 40%" class="text-right">금액 (Amount)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map((item, i) => `
+                  <tr class="${i % 2 === 1 ? 'row-even' : ''}">
+                    <td>${item.cat}</td>
+                    <td class="text-right">${item.val.toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="footer-settlement">
+              <div>
+                <p style="font-size: 11px; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">REPORT DATE</p>
+                <p style="font-size: 14px; font-weight: 800; color: #475569;">${new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+              <div style="text-align: right">
+                <span class="final-balance-label">최종 정산 잔액 : </span>
+                <span class="final-balance-value">${balance.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div class="signature-area">
+              <span>회계 <span class="sign-box"></span> (인)</span>
+              <span>감사 <span class="sign-box"></span> (인)</span>
+            </div>
           </div>
           <script>
             window.onload = () => {
@@ -636,149 +702,92 @@ const App: React.FC = () => {
         )}
 
         {activeTab === TabType.REPORT && (
-          <div className="space-y-6 pb-10">
-            {/* 1. Original Report Table */}
-            <div className="space-y-3">
-              <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
-                <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
-                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
+          <div className="space-y-12 pb-10">
+            {/* Original Report */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-3xl p-6 border border-orange-100 shadow-lg">
+                <div className="text-center mb-8 border-b border-stone-100 pb-6">
+                  <h2 className="text-xl font-black text-stone-800">재정결산서 (원본)</h2>
+                  <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-1">Official Financial Statement</p>
                 </div>
-                <div className="border-t-2 border-stone-800">
-                  <div className="border-b border-stone-300">
-                    <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">수입 (Income)</div>
-                    <div className="p-6 flex flex-col justify-center items-center text-center">
-                      <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                      <span className="text-3xl font-black text-rose-500">{totalAccumulatedOffering.toLocaleString()}</span>
-                    </div>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end border-b-2 border-stone-800 pb-3">
+                    <span className="text-sm font-black text-stone-500">수입 합계 (Income)</span>
+                    <span className="text-2xl font-black text-rose-500">₩{totalAccumulatedOffering.toLocaleString()}</span>
                   </div>
-                  <div>
-                    <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">지출 (Expense)</div>
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-2/3 text-[14px]">항목</th>
-                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="text-[11px] font-black text-stone-400 border-b border-stone-100">
+                        <th className="py-2">항목</th>
+                        <th className="py-2 text-right">금액</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-[13px]">
+                      {getReportExpenses(data.expenses).map((item, i) => (
+                        <tr key={i} className="border-b border-stone-50">
+                          <td className="py-3 font-bold text-stone-700">{item.cat}</td>
+                          <td className="py-3 text-right font-black text-stone-600">₩{item.val.toLocaleString()}</td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {getReportExpenses().map((item, i) => (
-                          <tr key={i} className="border-b border-stone-100 last:border-b-0 report-row">
-                            <td className="p-3 font-black text-stone-800 text-[15px]">{item.cat}</td>
-                            <td className="p-3 text-right font-black text-stone-700 text-[15px]">{item.val.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <div className="mt-0 border-t-2 border-stone-800">
-                  <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
-                    <div className="p-4 flex flex-col items-center">
-                      <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                      <span className="font-black text-rose-500 text-lg">{totalAccumulatedOffering.toLocaleString()}</span>
-                    </div>
-                    <div className="p-4 flex flex-col items-center">
-                      <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                      <span className="font-black text-stone-800 text-lg">{totalExpenses.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className="bg-stone-800 text-white p-5 flex justify-between items-center rounded-b-xl">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
-                    <span className="font-black text-2xl">{currentNetBalance.toLocaleString()}</span>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="bg-stone-50 rounded-2xl p-5 flex justify-between items-center mt-4">
+                    <span className="font-black text-stone-800">최종 정산 잔액</span>
+                    <span className="text-xl font-black text-stone-800">₩{currentNetBalance.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
               <button 
-                onClick={() => handlePrintTarget('report-original', '연합성회 재정결산서(원본)')}
-                className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm"
+                onClick={() => generatePDFReport(false)}
+                className="w-full py-4 bg-stone-800 text-white font-black rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg"
               >
-                <Printer size={16} />
-                <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
+                <Printer size={18} /> 원본 PDF 내보내기
               </button>
             </div>
 
-            {/* 2. Editable Report Table */}
-            <div className="space-y-3 pt-6">
-              <div id="report-editable" className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] relative">
-                <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집)</h2>
-                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
+            {/* Editable Report */}
+            <div className="space-y-4">
+              <div className="bg-white rounded-3xl p-6 border-4 border-indigo-50 shadow-lg">
+                <div className="text-center mb-8 border-b border-indigo-50 pb-6">
+                  <h2 className="text-xl font-black text-indigo-900">재정결산서 (편집용)</h2>
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-1">Independent Editable Report</p>
                 </div>
-                <div className="border-t-2 border-stone-800">
-                  <div className="border-b border-stone-300">
-                    <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
-                    <div className="p-6 flex flex-col justify-center items-center text-center">
-                      <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                      <div className="text-3xl font-black text-indigo-600">{totalAccumulatedOffering.toLocaleString()}</div>
-                      <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
-                    </div>
+                <div className="space-y-6">
+                  <div className="flex justify-between items-end border-b-2 border-indigo-900 pb-3">
+                    <span className="text-sm font-black text-indigo-400">수입 (고정)</span>
+                    <span className="text-2xl font-black text-indigo-600">₩{totalAccumulatedOffering.toLocaleString()}</span>
                   </div>
-                  <div>
-                    <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
-                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 어떤 탭에도 영향을 주지 않습니다.</div>
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-1/3 text-[14px]">항목</th>
-                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.keys(data.expenses).map((cat) => (
-                          <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
-                            <td className="p-3 text-stone-800 font-black text-[15px]">{cat}</td>
-                            <td className="p-0 text-right">
-                              <input 
-                                type="text"
-                                inputMode="numeric"
-                                value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
-                                onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-6 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[150px]"
-                                onFocus={(e) => e.target.select()}
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <div className="space-y-2">
+                    {Object.keys(data.expenses).map(cat => (
+                      <div key={cat} className="flex items-center justify-between py-2 border-b border-indigo-50">
+                        <span className="text-sm font-bold text-stone-700">{cat}</span>
+                        <input 
+                          type="text" 
+                          inputMode="numeric"
+                          value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
+                          onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          className="w-32 bg-indigo-50/50 rounded-lg px-3 py-2 text-right font-black text-indigo-600 outline-none focus:ring-2 focus:ring-indigo-200"
+                        />
+                      </div>
+                    ))}
                   </div>
-                </div>
-                <div className="mt-0 border-t-2 border-stone-800">
-                  <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
-                    <div className="p-4 flex flex-col items-center">
-                      <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                      <span className="font-black text-indigo-600 text-lg">{totalAccumulatedOffering.toLocaleString()}</span>
-                    </div>
-                    <div className="p-4 flex flex-col items-center">
-                      <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                      <span className="font-black text-stone-800 text-lg">{localReportTotalExpenses.toLocaleString()}</span>
-                    </div>
+                  <div className="bg-indigo-900 text-white rounded-2xl p-5 flex justify-between items-center mt-4 shadow-inner">
+                    <span className="font-black">최종 잔액 (가상)</span>
+                    <span className="text-xl font-black">₩{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
-                  <div className="bg-indigo-900 text-white p-5 flex justify-between items-center">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
-                    <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
-                  </div>
-                  <div className="p-4 bg-stone-100 flex justify-center border-t border-stone-200 rounded-b-xl no-print">
-                    <button 
-                      onClick={() => {
-                        setLocalReportExpenses({ ...data.expenses });
-                        setIsLocalReportInitialized(true);
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl font-black text-[11px] shadow-lg shadow-indigo-100 active:scale-95 transition-all"
-                    >
-                      <RotateCcw size={14} />
-                      원본 데이터 초기화
+                  <div className="flex justify-center pt-2">
+                    <button onClick={() => { setLocalReportExpenses({ ...data.expenses }); setIsLocalReportInitialized(true); }} className="flex items-center gap-1.5 px-4 py-2 bg-stone-100 rounded-full text-[10px] font-black text-stone-500 active:bg-stone-200">
+                      <RotateCcw size={12} /> 데이터 원본과 동기화
                     </button>
                   </div>
                 </div>
               </div>
               <button 
-                onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(편집)')}
-                className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 no-print shadow-sm"
+                onClick={() => generatePDFReport(true)}
+                className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-indigo-100"
               >
-                <Printer size={16} />
-                <span className="text-xs uppercase tracking-tight">편집용 결산서 PDF 내보내기</span>
+                <Printer size={18} /> 편집본 PDF 내보내기
               </button>
             </div>
           </div>
