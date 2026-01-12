@@ -692,7 +692,7 @@ const App: React.FC = () => {
             <div className="space-y-3">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] relative">
                 <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집)</h2>
+                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
@@ -746,7 +746,7 @@ const App: React.FC = () => {
                     </div>
                   </div>
                   <div className="bg-indigo-900 text-white p-5 flex justify-between items-center">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
                     <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
                   <div className="p-4 bg-stone-100 flex justify-center border-t border-stone-200 rounded-b-xl no-print">
