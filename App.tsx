@@ -350,118 +350,83 @@ const App: React.FC = () => {
     setLocalReportExpenses(prev => ({ ...prev, [cat]: val }));
   };
 
-  const handlePrintTarget = async (id: string, title: string) => {
+  const handlePrintTarget = (id: string, title: string) => {
     const content = document.getElementById(id);
-    if (!content) {
-      alert('내보낼 내용을 찾을 수 없습니다.');
-      return;
-    }
+    if (!content) return;
+    
+    // Create a temporary iframe for clean printing
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    document.body.appendChild(iframe);
+    
+    const doc = iframe.contentWindow?.document;
+    if (!doc) return;
+    
+    // Cloning to avoid modifying the screen version
+    const cloned = content.cloneNode(true) as HTMLElement;
+    // Remove no-print elements from the clone
+    cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
-    try {
-      // 클론 생성 (깊은 복사)
-      const cloned = content.cloneNode(true) as HTMLElement;
-      
-      // no-print 클래스가 있는 요소 제거
-      cloned.querySelectorAll('.no-print').forEach(el => el.remove());
-
-      // 입력 필드를 텍스트로 변환 (화면에 보이는 값 그대로 사용)
-      cloned.querySelectorAll('input').forEach(input => {
-        const inputElement = input as HTMLInputElement;
-        const text = document.createElement('span');
-        const value = inputElement.value || '';
-        text.innerText = value;
-        
-        // 스타일 복사
-        const computedStyle = window.getComputedStyle(inputElement);
-        text.style.display = 'inline-block';
-        text.style.width = computedStyle.width || '100%';
-        text.style.textAlign = 'right';
-        text.style.fontWeight = computedStyle.fontWeight || '900';
-        text.style.fontSize = computedStyle.fontSize || '15px';
-        text.style.color = computedStyle.color || '#1c1917';
-        text.style.fontFamily = computedStyle.fontFamily;
-        text.style.padding = computedStyle.padding;
-        text.style.margin = computedStyle.margin;
-        text.className = inputElement.className.replace('bg-transparent', '').replace('border-none', '').replace('outline-none', '');
-        
-        inputElement.parentNode?.replaceChild(text, inputElement);
-      });
-
-      // 임시 컨테이너 생성 (화면에 보이지 않게)
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'fixed';
-      tempContainer.style.left = '0';
-      tempContainer.style.top = '0';
-      tempContainer.style.width = '794px'; // A4 width in pixels
-      tempContainer.style.background = 'white';
-      tempContainer.style.padding = '40px';
-      tempContainer.style.boxSizing = 'border-box';
-      tempContainer.style.zIndex = '9999';
-      tempContainer.style.opacity = '0';
-      tempContainer.style.pointerEvents = 'none';
-      
-      // Tailwind CSS가 적용되도록 클래스 유지
-      cloned.className = content.className;
-      cloned.style.width = '100%';
-      cloned.style.maxWidth = '100%';
-      cloned.style.margin = '0';
-      cloned.style.padding = '0';
-      
-      // 배경색과 테두리 스타일 보존
-      const originalStyle = window.getComputedStyle(content);
-      cloned.style.backgroundColor = originalStyle.backgroundColor || 'white';
-      cloned.style.border = originalStyle.border || 'none';
-      cloned.style.borderRadius = originalStyle.borderRadius || '0';
-      
-      tempContainer.appendChild(cloned);
-      document.body.appendChild(tempContainer);
-
-      // html2pdf 옵션 설정
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `${title}_${new Date().toISOString().split('T')[0]}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: 794,
-          height: cloned.scrollHeight + 80,
-          windowWidth: 794,
-          windowHeight: cloned.scrollHeight + 80
-        },
-        jsPDF: { 
-          unit: 'mm', 
-          format: 'a4', 
-          orientation: 'portrait',
-          compress: true
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-
-      // html2pdf가 전역에 있는지 확인
-      if (typeof (window as any).html2pdf === 'undefined') {
-        alert('PDF 생성 라이브러리를 불러올 수 없습니다. 페이지를 새로고침해주세요.');
-        document.body.removeChild(tempContainer);
-        return;
-      }
-
-      // PDF 생성 및 다운로드
-      await (window as any).html2pdf().set(opt).from(tempContainer).save();
-      
-      // 임시 컨테이너 제거
-      setTimeout(() => {
-        if (document.body.contains(tempContainer)) {
-          document.body.removeChild(tempContainer);
-        }
-      }, 1000);
-
-    } catch (error) {
-      console.error('PDF 생성 오류:', error);
-      alert('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
-    }
+    doc.write(`
+      <html>
+        <head>
+          <title>${title}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+          <style>
+            @page { 
+              size: A4; 
+              margin: 0; 
+            }
+            body { 
+              font-family: 'Pretendard', sans-serif; 
+              margin: 0;
+              padding: 0;
+              background: white; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 210mm;
+              height: 297mm;
+            }
+            .print-container {
+              width: 100%;
+              max-width: 190mm;
+              padding: 20mm;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              box-sizing: border-box;
+            }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #e5e7eb; }
+            .no-print { display: none !important; }
+            .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
+            input { border: none !important; background: transparent !important; pointer-events: none !important; }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            ${cloned.innerHTML}
+          </div>
+          <script>
+            window.onload = () => {
+              window.focus();
+              window.print();
+              setTimeout(() => { window.frameElement.remove(); }, 1000);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    doc.close();
   };
 
   return (
@@ -664,17 +629,17 @@ const App: React.FC = () => {
           <div className="space-y-12 pb-10">
             {/* 1. Original Report Table */}
             <div className="space-y-3">
-              <div id="report-original" className="bg-white p-6 sm:p-10 border border-stone-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
+              <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
                 <div className="text-center mb-10">
                   <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
-                  <div className="border-b border-stone-300 summary-bg">
+                  <div className="border-b border-stone-300">
                     <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                      <span className="text-3xl font-black text-rose-500">₩{totalAccumulatedOffering.toLocaleString()}</span>
+                      <span className="text-3xl font-black text-rose-500">{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
                   </div>
                   <div>
@@ -701,16 +666,16 @@ const App: React.FC = () => {
                   <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                      <span className="font-black text-rose-500 text-lg">₩{totalAccumulatedOffering.toLocaleString()}</span>
+                      <span className="font-black text-rose-500 text-lg">{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                      <span className="font-black text-stone-800 text-lg">₩{totalExpenses.toLocaleString()}</span>
+                      <span className="font-black text-stone-800 text-lg">{totalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="bg-stone-900 text-white p-5 flex justify-between items-center rounded-b-xl final-total-area">
+                  <div className="bg-stone-800 text-white p-5 flex justify-between items-center rounded-b-xl">
                     <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
-                    <span className="font-black text-2xl">₩{currentNetBalance.toLocaleString()}</span>
+                    <span className="font-black text-2xl">{currentNetBalance.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -731,17 +696,17 @@ const App: React.FC = () => {
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
-                  <div className="border-b border-stone-300 summary-bg">
+                  <div className="border-b border-stone-300">
                     <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                      <div className="text-3xl font-black text-indigo-600">₩{totalAccumulatedOffering.toLocaleString()}</div>
+                      <div className="text-3xl font-black text-indigo-600">{totalAccumulatedOffering.toLocaleString()}</div>
                       <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
                     </div>
                   </div>
                   <div>
                     <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
-                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 원본에 영향을 주지 않습니다.</div>
+                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 어떤 탭에도 영향을 주지 않습니다.</div>
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
@@ -759,7 +724,7 @@ const App: React.FC = () => {
                                 inputMode="numeric"
                                 value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
                                 onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[150px] max-w-[150px] ml-auto"
+                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[100px] max-w-[140px] ml-auto"
                                 onFocus={(e) => e.target.select()}
                               />
                             </td>
@@ -773,16 +738,16 @@ const App: React.FC = () => {
                   <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                      <span className="font-black text-indigo-600 text-lg">₩{totalAccumulatedOffering.toLocaleString()}</span>
+                      <span className="font-black text-indigo-600 text-lg">{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                      <span className="font-black text-stone-800 text-lg">₩{localReportTotalExpenses.toLocaleString()}</span>
+                      <span className="font-black text-stone-800 text-lg">{localReportTotalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="bg-slate-900 text-white p-5 flex justify-between items-center rounded-b-xl final-total-area">
-                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집)</span>
-                    <span className="font-black text-2xl text-amber-300">₩{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
+                  <div className="bg-indigo-900 text-white p-5 flex justify-between items-center">
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
+                    <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
                   <div className="p-4 bg-stone-100 flex justify-center border-t border-stone-200 rounded-b-xl no-print">
                     <button 
@@ -1095,7 +1060,7 @@ const App: React.FC = () => {
                           <option value="">출금 항목 선택</option>
                           {Object.keys(data.personalExpenses || {}).map(cat => (
                             <option key={cat} value={cat}>
-                              {cat} ({ (data.personalExpenses[cat] || 0).toLocaleString() })
+                              {cat} (₩{(data.personalExpenses[cat] || 0).toLocaleString()})
                             </option>
                           ))}
                         </select>
@@ -1104,7 +1069,7 @@ const App: React.FC = () => {
                       {selectedPersonalCat && (
                         <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
                           <p className="text-[11px] font-bold text-rose-400 uppercase tracking-widest mb-1">출금 예정 금액</p>
-                          <p className="text-xl font-black text-rose-600">{ (data.personalExpenses[selectedPersonalCat] || 0).toLocaleString() }</p>
+                          <p className="text-xl font-black text-rose-600">₩{(data.personalExpenses[selectedPersonalCat] || 0).toLocaleString()}</p>
                           <p className="text-[10px] text-rose-400 mt-2">* 해당 항목의 전체 합계가 출금 처리됩니다.</p>
                         </div>
                       )}
@@ -1114,7 +1079,7 @@ const App: React.FC = () => {
                   <button onClick={() => {
                     const nameInput = document.getElementById('bankName') as HTMLInputElement | null;
                     const name = nameInput ? nameInput.value : '';
-                    const amount = parseInt(bankAmountDisplay.replace(/,/g, '')) || 0;
+                    const amount = parseInt(bankAmountDisplay.replace(/,/g, ''));
                     
                     if (bankType === 'withdraw' && !selectedPersonalCat) {
                       alert('출금 항목을 선택해주세요.');
@@ -1172,7 +1137,7 @@ const App: React.FC = () => {
                   ))}
                   <div className="mt-8 pt-6 border-t border-stone-100 flex justify-between items-center">
                     <span className="text-sm font-bold text-stone-600">항목 합계</span>
-                    <span className="text-2xl font-black text-rose-500">{getCountingTotal(modal.day!, modal.time!).toLocaleString()}</span>
+                    <span className="text-2xl font-black text-rose-500">₩{getCountingTotal(modal.day!, modal.time!).toLocaleString()}</span>
                   </div>
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-rose-400 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">입력 완료</button>
                 </div>
@@ -1204,7 +1169,7 @@ const App: React.FC = () => {
                    ))}
                    <div className="mt-8 pt-6 border-t border-stone-100 flex justify-between items-center">
                     <span className="text-sm font-bold text-stone-600">현금 총액</span>
-                    <span className="text-2xl font-black text-rose-500">{manualCashTotal.toLocaleString()}</span>
+                    <span className="text-2xl font-black text-rose-500">₩{manualCashTotal.toLocaleString()}</span>
                   </div>
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-stone-800 text-white font-black rounded-2xl active:scale-95 transition-transform">저장 완료</button>
                 </div>
