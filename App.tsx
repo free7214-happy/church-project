@@ -401,6 +401,8 @@ const App: React.FC = () => {
             }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #e5e7eb; }
+            .no-print { display: none !important; }
+            .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
           </style>
         </head>
         <body>
@@ -453,7 +455,7 @@ const App: React.FC = () => {
           <div className="space-y-3">
             <div className="bg-rose-400 rounded-2xl p-6 text-white shadow-lg text-center transform transition-all">
               <span className="text-[15px] opacity-100 font-black uppercase tracking-widest block mb-1">누적 헌금 총액</span>
-              <div className="text-4xl font-black tracking-tighter">₩{totalAccumulatedOffering.toLocaleString()}</div>
+              <div className="text-3xl font-black tracking-tighter">₩{totalAccumulatedOffering.toLocaleString()}</div>
             </div>
             {DAYS.map(day => (
               <div key={day} className="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
@@ -488,7 +490,7 @@ const App: React.FC = () => {
           <div className="space-y-3">
             <div className="bg-amber-400 rounded-2xl p-6 text-white shadow-lg text-center transform transition-all">
               <span className="text-[15px] opacity-100 font-black uppercase tracking-widest block mb-1">누적 참석 인원</span>
-              <div className="text-4xl font-black tracking-tighter">{totalAttendanceAll.toLocaleString()}명</div>
+              <div className="text-3xl font-black tracking-tighter">{totalAttendanceAll.toLocaleString()}명</div>
             </div>
             {DAYS.map(day => (
               <div key={day} className="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
@@ -534,7 +536,7 @@ const App: React.FC = () => {
           <div className="space-y-4">
             <div className="bg-stone-700 rounded-3xl p-6 text-white shadow-lg text-center transform transition-all">
               <span className="text-[15px] opacity-100 font-black uppercase tracking-widest text-stone-300 block mb-1">총 지출</span>
-              <div className="text-4xl font-black tracking-tighter">₩{totalExpenses.toLocaleString()}</div>
+              <div className="text-3xl font-black tracking-tighter">₩{totalExpenses.toLocaleString()}</div>
             </div>
             <div className="space-y-2">
               {Object.entries(data.expenses).map(([cat, val]) => (
@@ -574,7 +576,7 @@ const App: React.FC = () => {
           <div className="space-y-4">
             <div className="bg-indigo-600 rounded-3xl p-6 text-white shadow-lg text-center transform transition-all">
               <span className="text-[15px] opacity-100 font-black uppercase tracking-widest text-indigo-100 block mb-1">총 개인 지출</span>
-              <div className="text-4xl font-black tracking-tighter">₩{totalPersonalExpenses.toLocaleString()}</div>
+              <div className="text-3xl font-black tracking-tighter">₩{totalPersonalExpenses.toLocaleString()}</div>
             </div>
             <div className="space-y-2">
               {Object.entries(data.personalExpenses || {}).map(([cat, val]) => (
@@ -617,7 +619,7 @@ const App: React.FC = () => {
         )}
 
         {activeTab === TabType.REPORT && (
-          <div className="space-y-12">
+          <div className="space-y-6">
             {/* 1. Original Report Table */}
             <div className="space-y-4">
               <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
@@ -630,7 +632,7 @@ const App: React.FC = () => {
                     <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                      <span className="text-2xl font-black text-rose-500">₩{totalAccumulatedOffering.toLocaleString()}</span>
+                      <span className="text-3xl font-black text-rose-500">₩{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
                   </div>
                   <div>
@@ -638,15 +640,15 @@ const App: React.FC = () => {
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-2 text-left font-bold text-stone-600 w-2/3">항목</th>
-                          <th className="border-b border-stone-200 p-2 text-right font-bold text-stone-600">금액</th>
+                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-2/3 text-[14px]">항목</th>
+                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {getReportExpenses().map((item, i) => (
-                          <tr key={i} className="border-b border-stone-100 last:border-b-0">
-                            <td className="p-2 font-bold text-stone-700">{item.cat}</td>
-                            <td className="p-2 text-right font-medium text-stone-600">₩{item.val.toLocaleString()}</td>
+                          <tr key={i} className="border-b border-stone-100 last:border-b-0 report-row">
+                            <td className="p-3 font-black text-stone-800 text-[15px]">{item.cat}</td>
+                            <td className="p-3 text-right font-black text-stone-700 text-[15px]">{item.val.toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -657,16 +659,16 @@ const App: React.FC = () => {
                   <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                      <span className="font-black text-rose-500 text-base">₩{totalAccumulatedOffering.toLocaleString()}</span>
+                      <span className="font-black text-rose-500 text-lg">₩{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                      <span className="font-black text-stone-800 text-base">₩{totalExpenses.toLocaleString()}</span>
+                      <span className="font-black text-stone-800 text-lg">₩{totalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="bg-stone-800 text-white p-4 flex justify-between items-center rounded-b-xl">
-                    <span className="font-black text-sm uppercase tracking-wider">최종 잔액</span>
-                    <span className="font-black text-xl">₩{currentNetBalance.toLocaleString()}</span>
+                  <div className="bg-stone-800 text-white p-5 flex justify-between items-center rounded-b-xl">
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
+                    <span className="font-black text-2xl">₩{currentNetBalance.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -683,7 +685,7 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] relative">
                 <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
+                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집)</h2>
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
@@ -691,29 +693,31 @@ const App: React.FC = () => {
                     <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                      <div className="text-2xl font-black text-indigo-600">₩{totalAccumulatedOffering.toLocaleString()}</div>
+                      <div className="text-3xl font-black text-indigo-600">₩{totalAccumulatedOffering.toLocaleString()}</div>
+                      <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
                     </div>
                   </div>
                   <div>
                     <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
+                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 어떤 탭에도 영향을 주지 않습니다.</div>
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-2 text-left font-bold text-stone-600 w-2/3">항목</th>
-                          <th className="border-b border-stone-200 p-2 text-right font-bold text-stone-600">금액 (원)</th>
+                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-2/3 text-[14px]">항목</th>
+                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {Object.keys(data.expenses).map((cat) => (
-                          <tr key={cat} className="border-b border-stone-100 last:border-b-0">
-                            <td className="p-2 text-stone-700 font-bold">{cat}</td>
+                          <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
+                            <td className="p-3 text-stone-800 font-black text-[15px]">{cat}</td>
                             <td className="p-0 text-right">
                               <input 
                                 type="text"
                                 inputMode="numeric"
                                 value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
                                 onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-medium text-stone-600 outline-none px-2 py-2 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600"
+                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-3 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600"
                                 onFocus={(e) => e.target.select()}
                               />
                             </td>
@@ -727,16 +731,16 @@ const App: React.FC = () => {
                   <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                      <span className="font-black text-indigo-600 text-base">₩{totalAccumulatedOffering.toLocaleString()}</span>
+                      <span className="font-black text-indigo-600 text-lg">₩{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
                     <div className="p-4 flex flex-col items-center">
                       <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                      <span className="font-black text-stone-800 text-base">₩{localReportTotalExpenses.toLocaleString()}</span>
+                      <span className="font-black text-stone-800 text-lg">₩{localReportTotalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="bg-indigo-900 text-white p-4 flex justify-between items-center">
-                    <span className="font-black text-sm uppercase tracking-wider">최종 잔액</span>
-                    <span className="font-black text-xl text-amber-300">₩{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
+                  <div className="bg-indigo-900 text-white p-5 flex justify-between items-center">
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액 (편집용)</span>
+                    <span className="font-black text-2xl text-amber-300">₩{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
                   </div>
                   <div className="p-4 bg-stone-100 flex justify-center border-t border-stone-200 rounded-b-xl no-print">
                     <button 
@@ -915,7 +919,7 @@ const App: React.FC = () => {
 
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
-          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             {modal.type === 'save' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1068,7 +1072,7 @@ const App: React.FC = () => {
                   <button onClick={() => {
                     const nameInput = document.getElementById('bankName') as HTMLInputElement | null;
                     const name = nameInput ? nameInput.value : '';
-                    const amount = parseInt(bankAmountDisplay.replace(/,/g, '')) || 0;
+                    const amount = parseInt(bankAmountDisplay.replace(/,/g, ''));
                     
                     if (bankType === 'withdraw' && !selectedPersonalCat) {
                       alert('출금 항목을 선택해주세요.');
