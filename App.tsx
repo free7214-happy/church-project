@@ -778,7 +778,7 @@ const App: React.FC = () => {
                   className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"
                 >
                   <Printer size={16} />
-                  <span className="text-xs uppercase tracking-tight">편집용 결산서 PDF 내보내기</span>
+                  <span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span>
                 </button>
                 <button 
                   onClick={() => {
