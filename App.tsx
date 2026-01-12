@@ -354,7 +354,6 @@ const App: React.FC = () => {
     const content = document.getElementById(id);
     if (!content) return;
     
-    // Create a temporary iframe for clean printing
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -367,10 +366,15 @@ const App: React.FC = () => {
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
     
-    // Cloning to avoid modifying the screen version
     const cloned = content.cloneNode(true) as HTMLElement;
-    // Remove no-print elements from the clone
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+    // Ensure all numeric displays in the clone are clean
+    cloned.querySelectorAll('input').forEach(inp => {
+      const val = inp.value;
+      const span = doc.createElement('span');
+      span.textContent = val;
+      inp.parentNode?.replaceChild(span, inp);
+    });
 
     doc.write(`
       <html>
@@ -405,11 +409,11 @@ const App: React.FC = () => {
               justify-content: center;
               box-sizing: border-box;
             }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #e5e7eb; }
+            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+            th, td { border: 1px solid #000; padding: 10px 8px; text-align: center; }
+            th { background-color: #f3f4f6; font-weight: 800; }
             .no-print { display: none !important; }
-            .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
-            input { border: none !important; background: transparent !important; pointer-events: none !important; }
+            .amount-cell { text-align: right; font-family: monospace; font-weight: bold; }
           </style>
         </head>
         <body>
@@ -626,9 +630,9 @@ const App: React.FC = () => {
         )}
 
         {activeTab === TabType.REPORT && (
-          <div className="space-y-12 pb-10">
+          <div className="space-y-6 pb-10">
             {/* 1. Original Report Table */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
                 <div className="text-center mb-10">
                   <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
@@ -689,7 +693,7 @@ const App: React.FC = () => {
             </div>
 
             {/* 2. Editable Report Table */}
-            <div className="space-y-3">
+            <div className="space-y-2 pt-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] relative">
                 <div className="text-center mb-10">
                   <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집)</h2>
