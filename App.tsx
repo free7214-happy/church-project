@@ -710,21 +710,21 @@ const App: React.FC = () => {
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-1/3 text-[14px]">항목</th>
+                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-1/2 text-[14px]">항목</th>
                           <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {Object.keys(data.expenses).map((cat) => (
                           <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
-                            <td className="p-3 text-stone-800 font-black text-[15px]">{cat}</td>
+                            <td className="p-3 text-stone-800 font-black text-[15px] whitespace-nowrap overflow-hidden text-ellipsis">{cat}</td>
                             <td className="p-0 text-right">
                               <input 
                                 type="text"
                                 inputMode="numeric"
                                 value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
                                 onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-6 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[150px]"
+                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[100px] max-w-[140px] ml-auto"
                                 onFocus={(e) => e.target.select()}
                               />
                             </td>
