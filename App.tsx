@@ -704,7 +704,7 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border border-indigo-100 rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
                 <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집)</h2>
+                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (보고)</h2>
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
