@@ -350,110 +350,118 @@ const App: React.FC = () => {
     setLocalReportExpenses(prev => ({ ...prev, [cat]: val }));
   };
 
-  const handlePrintTarget = (id: string, title: string) => {
+  const handlePrintTarget = async (id: string, title: string) => {
     const content = document.getElementById(id);
-    if (!content) return;
-    
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0';
-    iframe.style.height = '0';
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden';
-    document.body.appendChild(iframe);
-    
-    const doc = iframe.contentWindow?.document;
-    if (!doc) return;
-    
-    const cloned = content.cloneNode(true) as HTMLElement;
-    cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+    if (!content) {
+      alert('내보낼 내용을 찾을 수 없습니다.');
+      return;
+    }
 
-    // 인라인 데이터 텍스트 변환 (입력 필드 제거)
-    cloned.querySelectorAll('input').forEach(input => {
-      const text = document.createElement('span');
-      text.innerText = (input as HTMLInputElement).value;
-      text.className = input.className;
-      text.style.display = 'inline-block';
-      text.style.width = '100%';
-      text.style.textAlign = 'right';
-      input.parentNode?.replaceChild(text, input);
-    });
+    try {
+      // 클론 생성 (깊은 복사)
+      const cloned = content.cloneNode(true) as HTMLElement;
+      
+      // no-print 클래스가 있는 요소 제거
+      cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
-    doc.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${title}</title>
-          <script src="https://cdn.tailwindcss.com"></script>
-          <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
-          <style>
-            @page { 
-              size: A4; 
-              margin: 0; 
-            }
-            body { 
-              font-family: 'Pretendard', sans-serif; 
-              margin: 0;
-              padding: 0;
-              background: white !important; 
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 210mm;
-              height: 297mm;
-              overflow: hidden;
-            }
-            .page-container {
-              width: 210mm;
-              height: 297mm;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 10mm;
-              box-sizing: border-box;
-              background: white;
-            }
-            .report-box {
-              width: 100%;
-              max-width: 190mm;
-              background: white;
-              padding: 40px;
-              border: 1px solid #f1f5f9;
-              border-radius: 24px;
-              box-shadow: none !important;
-            }
-            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-            .no-print { display: none !important; }
-            .summary-bg { background-color: #f8fafc !important; }
-            .final-total-area { 
-              background-color: #0f172a !important; 
-              color: white !important; 
-              border-radius: 0 0 12px 12px;
-            }
-            .final-total-area * { color: white !important; }
-          </style>
-        </head>
-        <body>
-          <div class="page-container">
-            <div class="report-box">
-              ${cloned.innerHTML}
-            </div>
-          </div>
-          <script>
-            window.onload = () => {
-              window.focus();
-              window.print();
-              setTimeout(() => { window.frameElement.remove(); }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    doc.close();
+      // 입력 필드를 텍스트로 변환 (화면에 보이는 값 그대로 사용)
+      cloned.querySelectorAll('input').forEach(input => {
+        const inputElement = input as HTMLInputElement;
+        const text = document.createElement('span');
+        const value = inputElement.value || '';
+        text.innerText = value;
+        
+        // 스타일 복사
+        const computedStyle = window.getComputedStyle(inputElement);
+        text.style.display = 'inline-block';
+        text.style.width = computedStyle.width || '100%';
+        text.style.textAlign = 'right';
+        text.style.fontWeight = computedStyle.fontWeight || '900';
+        text.style.fontSize = computedStyle.fontSize || '15px';
+        text.style.color = computedStyle.color || '#1c1917';
+        text.style.fontFamily = computedStyle.fontFamily;
+        text.style.padding = computedStyle.padding;
+        text.style.margin = computedStyle.margin;
+        text.className = inputElement.className.replace('bg-transparent', '').replace('border-none', '').replace('outline-none', '');
+        
+        inputElement.parentNode?.replaceChild(text, inputElement);
+      });
+
+      // 임시 컨테이너 생성 (화면에 보이지 않게)
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '0';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '794px'; // A4 width in pixels
+      tempContainer.style.background = 'white';
+      tempContainer.style.padding = '40px';
+      tempContainer.style.boxSizing = 'border-box';
+      tempContainer.style.zIndex = '9999';
+      tempContainer.style.opacity = '0';
+      tempContainer.style.pointerEvents = 'none';
+      
+      // Tailwind CSS가 적용되도록 클래스 유지
+      cloned.className = content.className;
+      cloned.style.width = '100%';
+      cloned.style.maxWidth = '100%';
+      cloned.style.margin = '0';
+      cloned.style.padding = '0';
+      
+      // 배경색과 테두리 스타일 보존
+      const originalStyle = window.getComputedStyle(content);
+      cloned.style.backgroundColor = originalStyle.backgroundColor || 'white';
+      cloned.style.border = originalStyle.border || 'none';
+      cloned.style.borderRadius = originalStyle.borderRadius || '0';
+      
+      tempContainer.appendChild(cloned);
+      document.body.appendChild(tempContainer);
+
+      // html2pdf 옵션 설정
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${title}_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: 794,
+          height: cloned.scrollHeight + 80,
+          windowWidth: 794,
+          windowHeight: cloned.scrollHeight + 80
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+
+      // html2pdf가 전역에 있는지 확인
+      if (typeof (window as any).html2pdf === 'undefined') {
+        alert('PDF 생성 라이브러리를 불러올 수 없습니다. 페이지를 새로고침해주세요.');
+        document.body.removeChild(tempContainer);
+        return;
+      }
+
+      // PDF 생성 및 다운로드
+      await (window as any).html2pdf().set(opt).from(tempContainer).save();
+      
+      // 임시 컨테이너 제거
+      setTimeout(() => {
+        if (document.body.contains(tempContainer)) {
+          document.body.removeChild(tempContainer);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('PDF 생성 오류:', error);
+      alert('PDF 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (
