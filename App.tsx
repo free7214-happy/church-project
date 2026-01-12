@@ -362,6 +362,7 @@ const App: React.FC = () => {
     iframe.style.width = '0';
     iframe.style.height = '0';
     iframe.style.border = '0';
+    iframe.style.zIndex = '-1000';
     document.body.appendChild(iframe);
     
     const doc = iframe.contentWindow?.document;
@@ -369,7 +370,8 @@ const App: React.FC = () => {
     
     // Cloning to avoid modifying the screen version
     const cloned = content.cloneNode(true) as HTMLElement;
-    // Remove no-print elements from the clone
+    
+    // Remove all no-print elements from the clone
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
     doc.write(`
@@ -407,21 +409,31 @@ const App: React.FC = () => {
             }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #e5e7eb; }
-            .no-print { display: none !important; }
             .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
-            input { border: none !important; background: transparent !important; pointer-events: none !important; }
+            /* Force table layout for print */
             #report-original, #report-editable {
-              border: none !important;
+              border: 1px solid #e5e7eb !important;
               box-shadow: none !important;
-              padding: 0 !important;
+              padding: 40px !important;
               margin: 0 !important;
+              width: 100% !important;
+              background: white !important;
+              border-radius: 0 !important;
+            }
+            /* Style inputs as plain text in print */
+            input { 
+              border: none !important; 
+              background: transparent !important; 
+              pointer-events: none !important; 
+              text-align: right !important;
+              font-weight: 800 !important;
               width: 100% !important;
             }
           </style>
         </head>
         <body>
           <div class="print-container">
-            ${cloned.innerHTML}
+            ${cloned.outerHTML}
           </div>
           <script>
             window.onload = () => {
@@ -633,9 +645,9 @@ const App: React.FC = () => {
         )}
 
         {activeTab === TabType.REPORT && (
-          <div className="space-y-12 pb-10">
+          <div className="space-y-16 pb-10">
             {/* 1. Original Report Table */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
                 <div className="text-center mb-10">
                   <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
@@ -688,32 +700,32 @@ const App: React.FC = () => {
               </div>
               <button 
                 onClick={() => handlePrintTarget('report-original', '연합성회 재정결산서(원본)')}
-                className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm"
+                className="w-full py-4 bg-stone-800 text-white font-black rounded-2xl flex items-center justify-center gap-3 active:scale-95 no-print shadow-xl"
               >
-                <Printer size={16} />
-                <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
+                <Printer size={18} />
+                <span className="uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
               </button>
             </div>
 
             {/* 2. Editable Report Table */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border-4 border-indigo-100 rounded-3xl shadow-xl text-[12px] relative">
                 <div className="text-center mb-10">
                   <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (편집용)</h2>
-                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
+                  <p className="text-indigo-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
                   <div className="border-b border-stone-300">
                     <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
                     <div className="p-6 flex flex-col justify-center items-center text-center">
-                      <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
+                      <span className="text-stone-400 font-bold mb-1 text-[10px]">총 헌금 수입 합계</span>
                       <div className="text-3xl font-black text-indigo-600">{totalAccumulatedOffering.toLocaleString()}</div>
                       <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
                     </div>
                   </div>
                   <div>
                     <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
-                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 어떤 탭에도 영향을 주지 않습니다.</div>
+                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 원본에 영향을 주지 않습니다.</div>
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
@@ -731,7 +743,7 @@ const App: React.FC = () => {
                                 inputMode="numeric"
                                 value={(localReportExpenses[cat] !== undefined ? localReportExpenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
                                 onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-6 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[150px] max-w-[150px] ml-auto"
+                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600 min-w-[120px] max-w-[140px] ml-auto"
                                 onFocus={(e) => e.target.select()}
                               />
                             </td>
@@ -771,11 +783,11 @@ const App: React.FC = () => {
                 </div>
               </div>
               <button 
-                onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(편집)')}
-                className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 no-print shadow-sm"
+                onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(편집용)')}
+                className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl flex items-center justify-center gap-3 active:scale-95 no-print shadow-xl"
               >
-                <Printer size={16} />
-                <span className="text-xs uppercase tracking-tight">편집용 결산서 PDF 내보내기</span>
+                <Printer size={18} />
+                <span className="uppercase tracking-tight">편집용 결산서 PDF 내보내기</span>
               </button>
             </div>
           </div>
