@@ -367,285 +367,93 @@ const App: React.FC = () => {
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
     
-    // 스타일을 포함한 깊은 복사 함수
-    const cloneWithStyles = (node: Node): Node => {
-      if (node.nodeType === Node.TEXT_NODE) {
-        return node.cloneNode(true);
-      }
-      
-      const element = node as HTMLElement;
-      const cloned = element.cloneNode(false) as HTMLElement;
-      
-      // computed styles를 인라인 스타일로 복사
-      if (element.nodeType === Node.ELEMENT_NODE) {
-        const computed = window.getComputedStyle(element);
-        
-        // 중요한 스타일 속성들
-        const importantStyles = [
-          'color', 'backgroundColor', 'background', 'backgroundImage', 'backgroundSize',
-          'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'lineHeight',
-          'padding', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
-          'margin', 'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
-          'border', 'borderTop', 'borderRight', 'borderBottom', 'borderLeft',
-          'borderWidth', 'borderStyle', 'borderColor', 'borderRadius',
-          'width', 'height', 'minWidth', 'minHeight', 'maxWidth', 'maxHeight',
-          'display', 'flex', 'flexDirection', 'flexWrap', 'justifyContent', 'alignItems', 'alignSelf',
-          'grid', 'gridTemplateColumns', 'gridTemplateRows', 'gridGap',
-          'textAlign', 'textDecoration', 'textTransform', 'letterSpacing',
-          'opacity', 'visibility', 'overflow', 'overflowX', 'overflowY',
-          'position', 'top', 'left', 'right', 'bottom', 'zIndex',
-          'transform', 'boxShadow', 'boxSizing'
-        ];
-        
-        const styleText: string[] = [];
-        
-        // 기존 인라인 스타일 유지
-        if (element.style.cssText) {
-          styleText.push(element.style.cssText);
-        }
-        
-        // 중요한 computed styles 추가
-        importantStyles.forEach(prop => {
-          // camelCase를 kebab-case로 변환
-          const kebabProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
-          const value = computed.getPropertyValue(kebabProp);
-          
-          if (value && value !== 'none' && value !== 'normal' && value !== 'auto' && value !== '0px' && value !== 'rgba(0, 0, 0, 0)') {
-            // 기본값이 아닌 경우만 추가 (kebab-case로 저장)
-            styleText.push(`${kebabProp}: ${value}`);
-          }
-        });
-        
-        if (styleText.length > 0) {
-          // 기존 스타일과 새 스타일 결합
-          const existingStyle = element.style.cssText || '';
-          cloned.style.cssText = existingStyle + (existingStyle ? '; ' : '') + styleText.join('; ');
-        } else if (element.style.cssText) {
-          cloned.style.cssText = element.style.cssText;
-        }
-        
-        // 클래스도 유지 (Tailwind가 작동하도록)
-        cloned.className = element.className;
-        
-        // 속성도 복사
-        Array.from(element.attributes).forEach(attr => {
-          if (attr.name !== 'style' && attr.name !== 'class') {
-            cloned.setAttribute(attr.name, attr.value);
-          }
-        });
-      }
-      
-      // 자식 노드 재귀적으로 복사
-      Array.from(element.childNodes).forEach(child => {
-        if (child.nodeType === Node.ELEMENT_NODE) {
-          const childEl = child as HTMLElement;
-          // no-print 클래스가 있는 요소는 건너뛰기
-          if (childEl.classList && childEl.classList.contains('no-print')) {
-            return;
-          }
-        }
-        cloned.appendChild(cloneWithStyles(child));
-      });
-      
-      return cloned;
-    };
-    
-    const cloned = cloneWithStyles(content) as HTMLElement;
-    
+    const cloned = content.cloneNode(true) as HTMLElement;
+    cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+
     // 인라인 데이터 텍스트 변환 (입력 필드 제거)
     cloned.querySelectorAll('input').forEach(input => {
       const text = document.createElement('span');
       text.innerText = (input as HTMLInputElement).value;
       text.className = input.className;
-      
-      // input의 computed styles 복사
-      const inputComputed = window.getComputedStyle(input);
-      text.style.cssText = `
-        display: inline-block;
-        width: 100%;
-        text-align: right;
-        color: ${inputComputed.color};
-        font-family: ${inputComputed.fontFamily};
-        font-size: ${inputComputed.fontSize};
-        font-weight: ${inputComputed.fontWeight};
-        padding: ${inputComputed.padding};
-        margin: ${inputComputed.margin};
-      `;
-      
+      text.style.display = 'inline-block';
+      text.style.width = '100%';
+      text.style.textAlign = 'right';
       input.parentNode?.replaceChild(text, input);
     });
 
-    // 이미지를 base64로 변환하는 함수
-    const convertImagesToBase64 = async (element: HTMLElement): Promise<void> => {
-      const images = element.querySelectorAll('img');
-      const promises = Array.from(images).map(async (img) => {
-        try {
-          if (img.src.startsWith('data:')) {
-            return; // 이미 base64인 경우
-          }
-          
-          // 이미지 로드 대기
-          if (!img.complete) {
-            await new Promise<void>((resolve) => {
-              img.onload = () => resolve();
-              img.onerror = () => resolve();
-              // 타임아웃
-              setTimeout(() => resolve(), 3000);
-            });
-          }
-          
-          // Canvas를 사용하여 base64로 변환
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return;
-          
-          canvas.width = img.naturalWidth || img.width;
-          canvas.height = img.naturalHeight || img.height;
-          
-          try {
-            ctx.drawImage(img, 0, 0);
-            const dataUrl = canvas.toDataURL('image/png');
-            img.src = dataUrl;
-          } catch (e) {
-            // CORS 오류 등은 무시하고 원본 유지
-            console.warn('Image conversion failed:', e);
-          }
-        } catch (e) {
-          console.warn('Image processing error:', e);
-        }
-      });
-      
-      await Promise.all(promises);
-    };
-
-    // 원본 페이지의 모든 스타일시트 가져오기
-    const getAllStyles = (): string => {
-      let styles = '';
-      Array.from(document.styleSheets).forEach(sheet => {
-        try {
-          if (sheet.href) {
-            styles += `<link rel="stylesheet" href="${sheet.href}">`;
-          } else {
-            // 인라인 스타일시트
-            const rules = sheet.cssRules || sheet.rules;
-            if (rules) {
-              Array.from(rules).forEach(rule => {
-                styles += rule.cssText + '\n';
-              });
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title}</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
+          <style>
+            @page { 
+              size: A4; 
+              margin: 0; 
             }
-          }
-        } catch (e) {
-          // CORS 오류 등 무시
-        }
-      });
-      return styles;
-    };
-
-    convertImagesToBase64(cloned).then(() => {
-      const allStyles = getAllStyles();
-      doc.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>${title}</title>
-            <script src="https://cdn.tailwindcss.com"></script>
-            <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
-            <style>
-              ${allStyles}
-              @page { 
-                size: A4; 
-                margin: 0; 
-              }
-              body { 
-                font-family: 'Pretendard', sans-serif; 
-                margin: 0;
-                padding: 0;
-                background: white !important; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 210mm;
-                height: 297mm;
-                overflow: hidden;
-              }
-              .page-container {
-                width: 210mm;
-                height: 297mm;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 10mm;
-                box-sizing: border-box;
-                background: white;
-              }
-              .report-box {
-                width: 100%;
-                max-width: 190mm;
-                background: white;
-                padding: 40px;
-                border: 1px solid #f1f5f9;
-                border-radius: 24px;
-                box-shadow: none !important;
-              }
-              table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-              .no-print { display: none !important; }
-              .summary-bg { background-color: #f8fafc !important; }
-              .final-total-area { 
-                background-color: #0f172a !important; 
-                color: white !important; 
-                border-radius: 0 0 12px 12px;
-              }
-              .final-total-area * { color: white !important; }
-              * { 
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="page-container">
-              <div class="report-box">
-                ${cloned.innerHTML}
-              </div>
+            body { 
+              font-family: 'Pretendard', sans-serif; 
+              margin: 0;
+              padding: 0;
+              background: white !important; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 210mm;
+              height: 297mm;
+              overflow: hidden;
+            }
+            .page-container {
+              width: 210mm;
+              height: 297mm;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 10mm;
+              box-sizing: border-box;
+              background: white;
+            }
+            .report-box {
+              width: 100%;
+              max-width: 190mm;
+              background: white;
+              padding: 40px;
+              border: 1px solid #f1f5f9;
+              border-radius: 24px;
+              box-shadow: none !important;
+            }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            .no-print { display: none !important; }
+            .summary-bg { background-color: #f8fafc !important; }
+            .final-total-area { 
+              background-color: #0f172a !important; 
+              color: white !important; 
+              border-radius: 0 0 12px 12px;
+            }
+            .final-total-area * { color: white !important; }
+          </style>
+        </head>
+        <body>
+          <div class="page-container">
+            <div class="report-box">
+              ${cloned.innerHTML}
             </div>
-            <script>
-              // 리소스 로드 대기 후 인쇄
-              function triggerPrint() {
-                // 렌더링 완료를 위한 추가 대기
-                setTimeout(() => {
-                  window.focus();
-                  window.print();
-                  setTimeout(() => { 
-                    const frame = window.frameElement as HTMLElement | null;
-                    if (frame && frame.parentNode) {
-                      frame.parentNode.removeChild(frame);
-                    }
-                  }, 500);
-                }, 500);
-              }
-              
-              // 폰트 로드 확인
-              if (document.fonts && document.fonts.ready) {
-                document.fonts.ready.then(() => {
-                  triggerPrint();
-                });
-              } else {
-                triggerPrint();
-              }
-              
-              // 폴백: 1.5초 후 강제 실행
-              setTimeout(() => {
-                triggerPrint();
-              }, 1500);
-            </script>
-          </body>
-        </html>
-      `);
-      doc.close();
-    });
+          </div>
+          <script>
+            window.onload = () => {
+              window.focus();
+              window.print();
+              setTimeout(() => { window.frameElement.remove(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    doc.close();
   };
 
   return (
