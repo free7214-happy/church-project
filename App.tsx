@@ -692,12 +692,10 @@ const App: React.FC = () => {
                     <div className="p-6 flex flex-col justify-center items-center text-center">
                       <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
                       <div className="text-2xl font-black text-indigo-600">₩{totalAccumulatedOffering.toLocaleString()}</div>
-                      <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
                     </div>
                   </div>
                   <div>
                     <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
-                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 여기서 수정하는 금액은 어떤 탭에도 영향을 주지 않습니다.</div>
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
