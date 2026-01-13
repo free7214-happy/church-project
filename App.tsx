@@ -325,6 +325,17 @@ const App: React.FC = () => {
     setModal({ type: 'reset', isOpen: false });
   };
 
+  const resetReportData = () => {
+    setData(prev => ({
+      ...prev,
+      report2Expenses: { ...prev.expenses },
+      report2Names: {},
+      lastUpdated: new Date().toISOString()
+    }));
+    setReportTitle('연합성회 재정결산서 (보고)');
+    setModal({ type: 'reset_report', isOpen: false });
+  };
+
   const executeDownload = (filename: string) => {
     const finalFilename = filename.trim() || `church_finance_${new Date().toISOString().split('T')[0]}`;
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -767,7 +778,7 @@ const App: React.FC = () => {
                   <Printer size={16} />
                   <span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span>
                 </button>
-                <button onClick={() => { setData(prev => ({ ...prev, report2Expenses: { ...prev.expenses }, report2Names: {}, lastUpdated: new Date().toISOString() })); setReportTitle('연합성회 재정결산서 (보고)'); }} className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50">
+                <button onClick={() => setModal({ type: 'reset_report', isOpen: true })} className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50">
                   <RotateCcw size={13} className="text-rose-500" />
                   항목 이름 및 금액 원본으로 초기화
                 </button>
@@ -1121,6 +1132,18 @@ const App: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
                   <button onClick={resetAllData} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button>
+                </div>
+              </div>
+            )}
+
+            {modal.type === 'reset_report' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-6"><RotateCcw size={32} /></div>
+                <h3 className="text-xl font-black text-stone-800 mb-2">보고서 항목 초기화</h3>
+                <p className="text-stone-500 text-sm mb-8">보고용 결산서의 항목명과 금액을<br/>원본 데이터로 되돌리시겠습니까?</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
+                  <button onClick={resetReportData} className="py-4 bg-amber-500 text-white font-bold rounded-2xl active:bg-amber-600">초기화 확인</button>
                 </div>
               </div>
             )}
