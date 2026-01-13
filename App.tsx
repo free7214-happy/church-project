@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [selectedPersonalCat, setSelectedPersonalCat] = useState<string>('');
   const [bankAmountDisplay, setBankAmountDisplay] = useState('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
+  const [reportTitle, setReportTitle] = useState('연합성회 재정결산서 (보고)');
   
   const [data, setData] = useState<OfferingData>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -266,20 +267,22 @@ const App: React.FC = () => {
     setModal(prev => ({ ...prev, isOpen: false }));
   };
 
-  const handleEditPersonalDetail = (cat: string, index: number, name: string, amount: number, syncWithChurchCat?: string) => {
+  const handleEditDetail = (cat: string, index: number, name: string, amount: number, isPersonal: boolean = false, syncWithChurchCat?: string) => {
     setData(prev => {
-      const details = [...(prev.personalExpenseDetails[cat] || [])];
+      const expKey = isPersonal ? 'personalExpenses' : 'expenses';
+      const detKey = isPersonal ? 'personalExpenseDetails' : 'expenseDetails';
+      const details = [...(prev[detKey][cat] || [])];
       details[index] = { ...details[index], name, amount: Math.max(0, amount) };
       const newTotal = details.reduce((s, i) => s + i.amount, 0);
       
       let nextData = { 
         ...prev, 
-        personalExpenseDetails: { ...prev.personalExpenseDetails, [cat]: details }, 
-        personalExpenses: { ...prev.personalExpenses, [cat]: newTotal },
+        [detKey]: { ...prev[detKey], [cat]: details }, 
+        [expKey]: { ...prev[expKey], [cat]: newTotal },
         lastUpdated: new Date().toISOString()
       };
 
-      if (syncWithChurchCat && prev.expenses[syncWithChurchCat] !== undefined) {
+      if (isPersonal && syncWithChurchCat && prev.expenses[syncWithChurchCat] !== undefined) {
         const dateStr = details[index].date || `${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
         const churchDetails = [...(prev.expenseDetails[syncWithChurchCat] || []), { name, amount: Math.max(0, amount), date: dateStr }];
         const churchTotal = churchDetails.reduce((s, i) => s + i.amount, 0);
@@ -620,11 +623,16 @@ const App: React.FC = () => {
                     <div className="mt-3 pt-3 border-t border-stone-50 space-y-2">
                       {data.expenseDetails[cat].map((item, idx) => (
                         <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
-                          <span className="flex-1 flex items-center gap-1.5 font-bold">
+                          <span 
+                            onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })}
+                            className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-amber-500 transition-colors"
+                          >
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
-                          <span className="font-mono text-stone-600 font-bold mr-2">₩{item.amount.toLocaleString()}</span>
-                          <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-stone-600 font-bold mr-2">₩{item.amount.toLocaleString()}</span>
+                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -660,15 +668,17 @@ const App: React.FC = () => {
                     <div className="mt-3 pt-3 border-t border-indigo-50 space-y-2">
                       {data.personalExpenseDetails[cat].map((item, idx) => (
                         <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
-                          <span className="flex-1 flex items-center gap-1.5 font-bold">
+                          <span 
+                            onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })}
+                            className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-indigo-500 transition-colors"
+                          >
                             <span className="text-[11px] text-indigo-300 font-mono font-black">{item.date}</span>
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
                           <div className="flex items-center gap-2">
                             <span className="font-mono text-stone-600 font-bold">₩{item.amount.toLocaleString()}</span>
                             <div className="flex items-center">
-                               <button onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-indigo-300 hover:text-indigo-500 p-1 active:scale-125 transition-all"><Edit3 size={14} /></button>
-                               <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all"><Trash2 size={14} /></button>
+                               <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
                             </div>
                           </div>
                         </div>
@@ -749,8 +759,13 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border border-indigo-100 rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
                 <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서 (보고)</h2>
-                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Independent Editable Report</p>
+                  <input 
+                    type="text"
+                    value={reportTitle}
+                    onChange={(e) => setReportTitle(e.target.value)}
+                    className="w-full bg-transparent text-center text-2xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1"
+                  />
+                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
                   <div className="border-b border-stone-300">
@@ -833,6 +848,7 @@ const App: React.FC = () => {
                       report2Names: {}, // Reset customized names
                       lastUpdated: new Date().toISOString()
                     }));
+                    setReportTitle('연합성회 재정결산서 (보고)');
                   }}
                   className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50"
                 >
@@ -1079,15 +1095,16 @@ const App: React.FC = () => {
                  <div className="flex justify-between items-center mb-6">
                   <div>
                     <h3 className="text-xl font-black text-stone-800">{modal.category}</h3>
-                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">내역 편집</p>
+                    <p className={`text-xs font-bold uppercase tracking-widest ${modal.isPersonal ? 'text-indigo-400' : 'text-rose-400'}`}>내역 편집</p>
                   </div>
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full active:bg-stone-100 transition-colors"><X size={20} /></button>
                 </div>
                 <EditDetailForm 
-                   initialName={data.personalExpenseDetails[modal.category!][modal.detailIndex!].name}
-                   initialAmount={data.personalExpenseDetails[modal.category!][modal.detailIndex!].amount}
+                   initialName={data[modal.isPersonal ? 'personalExpenseDetails' : 'expenseDetails'][modal.category!][modal.detailIndex!].name}
+                   initialAmount={data[modal.isPersonal ? 'personalExpenseDetails' : 'expenseDetails'][modal.category!][modal.detailIndex!].amount}
                    churchCategories={Object.keys(data.expenses)}
-                   onSave={(name, amt, syncCat) => handleEditPersonalDetail(modal.category!, modal.detailIndex!, name, amt, syncCat)}
+                   isPersonal={modal.isPersonal}
+                   onSave={(name, amt, syncCat) => handleEditDetail(modal.category!, modal.detailIndex!, name, amt, !!modal.isPersonal, syncCat)}
                 />
               </div>
             )}
@@ -1288,7 +1305,7 @@ const App: React.FC = () => {
                 <p className="text-stone-500 text-sm mb-8">선택한 상세 내역을 삭제하시겠습니까?</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleRemoveDetail(modal.category!, modal.detailIndex!, modal.isPersonal)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
+                  <button onClick={() => handleRemoveDetail(modal.category!, modal.detailIndex!, !!modal.isPersonal)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
                 </div>
               </div>
             )}
@@ -1322,7 +1339,7 @@ const App: React.FC = () => {
                 <p className="text-stone-500 text-sm mb-8">"{modal.category}" 개인 항목을 삭제하시겠습니까?</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button>
+                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
                 </div>
               </div>
             )}
@@ -1391,7 +1408,7 @@ const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: str
   );
 };
 
-const EditDetailForm = ({ initialName, initialAmount, churchCategories, onSave }: { initialName: string, initialAmount: number, churchCategories: string[], onSave: (name: string, amt: number, syncCat?: string) => void }) => {
+const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPersonal, onSave }: { initialName: string, initialAmount: number, churchCategories: string[], isPersonal?: boolean, onSave: (name: string, amt: number, syncCat?: string) => void }) => {
   const [name, setName] = useState(initialName);
   const [amountDisplay, setAmountDisplay] = useState(initialAmount.toLocaleString());
   const [syncCat, setSyncCat] = useState('');
@@ -1432,14 +1449,16 @@ const EditDetailForm = ({ initialName, initialAmount, churchCategories, onSave }
         className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" 
         required 
       />
-      <div className="space-y-2">
-        <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결 (수정)</p>
-        <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
-          <option value="">기존 연결 유지/안함</option>
-          {churchCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-        </select>
-      </div>
-      <button type="submit" className="w-full py-4 bg-indigo-500 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 transition-all active:scale-95">수정 완료</button>
+      {isPersonal && (
+        <div className="space-y-2">
+          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결 (수정)</p>
+          <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
+            <option value="">기존 연결 유지/안함</option>
+            {churchCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+          </select>
+        </div>
+      )}
+      <button type="submit" className={`w-full py-4 text-white font-black rounded-2xl shadow-lg transition-all active:scale-95 ${isPersonal ? 'bg-indigo-500 shadow-indigo-100' : 'bg-rose-400 shadow-rose-100'}`}>수정 완료</button>
     </form>
   );
 };
