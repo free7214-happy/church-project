@@ -412,6 +412,8 @@ const App: React.FC = () => {
       input.parentNode?.replaceChild(span, input);
     });
 
+    const isEditableReport = id === 'report-editable';
+
     doc.write(`
       <html>
         <head>
@@ -461,6 +463,7 @@ const App: React.FC = () => {
             }
             table { width: 100%; border-collapse: collapse; }
             .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            ${isEditableReport ? '.report-row td:last-child { text-align: left !important; padding-left: 20px; }' : ''}
             h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
           </style>
@@ -1319,7 +1322,7 @@ const App: React.FC = () => {
                 <p className="text-stone-500 text-sm mb-8">"{modal.category}" 개인 항목을 삭제하시겠습니까?</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
+                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button>
                 </div>
               </div>
             )}
