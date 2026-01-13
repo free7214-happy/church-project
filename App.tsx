@@ -463,7 +463,7 @@ const App: React.FC = () => {
             }
             table { width: 100%; border-collapse: collapse; }
             .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
-            ${isEditableReport ? '.report-row td:last-child { text-align: left !important; padding-left: 20px; }' : ''}
+            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
             h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
           </style>
