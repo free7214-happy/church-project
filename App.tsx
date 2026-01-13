@@ -386,8 +386,8 @@ const App: React.FC = () => {
   };
 
   const handlePrintTarget = (id: string, title: string) => {
-    const originalContent = document.getElementById(id);
-    if (!originalContent) return;
+    const content = document.getElementById(id);
+    if (!content) return;
     
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -401,26 +401,16 @@ const App: React.FC = () => {
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
     
-    const cloned = originalContent.cloneNode(true) as HTMLElement;
-
-    // Capture current values from the real DOM
-    const originalInputs = originalContent.querySelectorAll('input');
-    const clonedInputs = cloned.querySelectorAll('input');
-    originalInputs.forEach((input, index) => {
-      const val = (input as HTMLInputElement).value;
-      const span = document.createElement('span');
-      span.textContent = val;
-      span.className = input.className;
-      span.style.display = 'inline-block';
-      span.style.width = '100%';
-      span.style.border = 'none';
-      span.style.background = 'transparent';
-      if (clonedInputs[index]) {
-        clonedInputs[index].parentNode?.replaceChild(span, clonedInputs[index]);
-      }
-    });
-
+    const cloned = content.cloneNode(true) as HTMLElement;
+    // Remove UI helpers during printing
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+    // Convert inputs to static text for clear printing
+    cloned.querySelectorAll('input').forEach(input => {
+      const span = document.createElement('span');
+      span.textContent = (input as HTMLInputElement).value;
+      span.className = input.className;
+      input.parentNode?.replaceChild(span, input);
+    });
 
     doc.write(`
       <html>
@@ -459,27 +449,20 @@ const App: React.FC = () => {
             }
             .content-box { 
               width: 100%; 
-              max-width: 180mm; 
-              max-height: 275mm;
+              max-width: 190mm; 
+              max-height: 277mm;
               background: white;
-              border: 1px solid #e5e7eb;
-              border-radius: 20px;
-              padding: 30px;
+              border: 1px solid #f3f4f6;
+              border-radius: 24px;
+              padding: 40px;
               box-sizing: border-box;
               box-shadow: none !important;
               overflow: hidden;
             }
             table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 8px 6px; font-size: 14px; color: #1c1917; }
-            h2 { font-size: 24px !important; margin-bottom: 6px !important; }
-            p { font-size: 10px !important; }
+            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
-            span.text-right { text-align: right; }
-            span.text-left { text-align: left; }
-            /* Compress grid and summary areas */
-            .p-6 { padding: 1.25rem !important; }
-            .p-5 { padding: 1rem !important; }
-            .p-4 { padding: 0.75rem !important; }
           </style>
         </head>
         <body>
@@ -491,10 +474,8 @@ const App: React.FC = () => {
           <script>
             window.onload = () => {
               window.focus();
-              setTimeout(() => {
-                window.print();
-                setTimeout(() => { window.frameElement.remove(); }, 500);
-              }, 500);
+              window.print();
+              setTimeout(() => { window.frameElement.remove(); }, 500);
             };
           </script>
         </body>
