@@ -467,7 +467,7 @@ const App: React.FC = () => {
             table { width: 100%; border-collapse: collapse; }
             .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
             ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
-            h2 { font-size: 28px !important; margin-bottom: 8px !important; }
+            h2 { font-size: 24px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
           </style>
         </head>
@@ -575,20 +575,12 @@ const App: React.FC = () => {
                       <div key={time} className="flex items-center py-2 border-t border-stone-50 first:border-t-0">
                         <span className="text-[13px] font-bold text-stone-600 w-20">{time}</span>
                         <div className="flex-1 text-right">
-                          <div className="inline-flex items-center justify-end w-full">
-                            <input 
-                              type="number"
-                              inputMode="numeric"
-                              value={data.attendance[day]?.[time] || ''}
-                              onChange={(e) => handleUpdateAttendance(day, time, e.target.value)}
-                              onFocus={(e) => e.target.select()}
-                              placeholder="0"
-                              className={`w-14 bg-transparent border-none font-black text-right outline-none p-0 transition-colors text-[13px] ${attendanceVal > 0 ? 'text-stone-600' : 'text-stone-300 placeholder:text-stone-300'} focus:text-stone-600`}
-                            />
-                            <span className={`text-[13px] font-black transition-all inline-flex items-center ${attendanceVal > 0 ? 'text-stone-600' : 'text-stone-300'}`}>
-                              명
-                            </span>
-                          </div>
+                          <button 
+                            onClick={() => setModal({ type: 'attendance', isOpen: true, day, time })}
+                            className={`font-black text-[13px] transition-all inline-flex items-center active:scale-95 ${attendanceVal > 0 ? 'text-stone-600' : 'text-stone-300'}`}
+                          >
+                            {attendanceVal.toLocaleString()}명
+                          </button>
                         </div>
                       </div>
                     );
@@ -694,11 +686,10 @@ const App: React.FC = () => {
 
         {activeTab === TabType.REPORT && (
           <div className="space-y-8 pb-10">
-            {/* 1. Original Report Table */}
             <div className="space-y-4">
               <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
                 <div className="text-center mb-10">
-                  <h2 className="text-2xl font-black text-stone-800">연합성회 재정결산서</h2>
+                  <h2 className="text-xl font-black text-stone-800">연합성회 재정결산서</h2>
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
@@ -755,7 +746,6 @@ const App: React.FC = () => {
               </button>
             </div>
 
-            {/* 2. Editable Report Table (Input fields for BOTH name and amount) */}
             <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border border-indigo-100 rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
                 <div className="text-center mb-10">
@@ -763,7 +753,7 @@ const App: React.FC = () => {
                     type="text"
                     value={reportTitle}
                     onChange={(e) => setReportTitle(e.target.value)}
-                    className="w-full bg-transparent text-center text-2xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1"
+                    className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1"
                   />
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
@@ -1012,7 +1002,35 @@ const App: React.FC = () => {
 
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
-          <div className="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-w-[340px] mx-auto">
+            {modal.type === 'attendance' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">{modal.day} {modal.time}</h3>
+                    <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">참석 인원 수정</p>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <input 
+                      type="number" 
+                      inputMode="numeric"
+                      value={data.attendance[modal.day!]?.[modal.time!] || ''} 
+                      onChange={(e) => handleUpdateAttendance(modal.day!, modal.time!, e.target.value)}
+                      className="flex-1 min-w-0 p-4 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-800 text-center text-3xl outline-none focus:bg-white focus:border-amber-400 transition-all"
+                      placeholder="0"
+                      autoFocus
+                      onFocus={(e) => e.target.select()}
+                    />
+                    <span className="text-lg font-black text-stone-400 shrink-0">명</span>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-2 py-4 bg-amber-400 text-white font-black rounded-2xl shadow-lg shadow-amber-100 active:scale-95 transition-transform">저장 완료</button>
+                </div>
+              </div>
+            )}
+            
             {modal.type === 'save' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1339,7 +1357,7 @@ const App: React.FC = () => {
                 <p className="text-stone-500 text-sm mb-8">"{modal.category}" 개인 항목을 삭제하시겠습니까?</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button>
+                  <button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button>
                 </div>
               </div>
             )}
