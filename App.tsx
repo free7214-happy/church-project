@@ -386,8 +386,8 @@ const App: React.FC = () => {
   };
 
   const handlePrintTarget = (id: string, title: string) => {
-    const content = document.getElementById(id);
-    if (!content) return;
+    const originalContent = document.getElementById(id);
+    if (!originalContent) return;
     
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
@@ -401,16 +401,28 @@ const App: React.FC = () => {
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
     
-    const cloned = content.cloneNode(true) as HTMLElement;
-    // Remove UI helpers during printing
-    cloned.querySelectorAll('.no-print').forEach(el => el.remove());
-    // Convert inputs to static text for clear printing
-    cloned.querySelectorAll('input').forEach(input => {
+    // Deep clone to avoid mutating the web UI
+    const cloned = originalContent.cloneNode(true) as HTMLElement;
+
+    // Critical: Capture actual current input values and replace inputs with spans
+    const originalInputs = originalContent.querySelectorAll('input');
+    const clonedInputs = cloned.querySelectorAll('input');
+    originalInputs.forEach((input, index) => {
+      const val = (input as HTMLInputElement).value;
       const span = document.createElement('span');
-      span.textContent = (input as HTMLInputElement).value;
+      span.textContent = val;
+      // Inherit alignment and style
       span.className = input.className;
-      input.parentNode?.replaceChild(span, input);
+      span.style.display = 'inline-block';
+      span.style.width = '100%';
+      // Replace in cloned node
+      if (clonedInputs[index]) {
+        clonedInputs[index].parentNode?.replaceChild(span, clonedInputs[index]);
+      }
     });
+
+    // Remove UI helpers
+    cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
     doc.write(`
       <html>
@@ -444,13 +456,13 @@ const App: React.FC = () => {
               display: flex;
               align-items: center;
               justify-content: center;
-              padding: 10mm;
+              padding: 15mm;
               box-sizing: border-box;
             }
             .content-box { 
               width: 100%; 
-              max-width: 190mm; 
-              max-height: 277mm;
+              max-width: 180mm; 
+              max-height: 267mm;
               background: white;
               border: 1px solid #f3f4f6;
               border-radius: 24px;
@@ -460,9 +472,11 @@ const App: React.FC = () => {
               overflow: hidden;
             }
             table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            .report-row td { padding: 12px 10px; font-size: 15px; color: #1c1917; }
             h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
+            /* Force static spans to look like the UI */
+            span.text-right { text-align: right; }
           </style>
         </head>
         <body>
@@ -474,8 +488,10 @@ const App: React.FC = () => {
           <script>
             window.onload = () => {
               window.focus();
-              window.print();
-              setTimeout(() => { window.frameElement.remove(); }, 500);
+              setTimeout(() => {
+                window.print();
+                setTimeout(() => { window.frameElement.remove(); }, 500);
+              }, 500);
             };
           </script>
         </body>
