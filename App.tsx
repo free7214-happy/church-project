@@ -401,30 +401,25 @@ const App: React.FC = () => {
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
     
-    // Deep clone to avoid mutating the web UI
     const cloned = originalContent.cloneNode(true) as HTMLElement;
 
-    // Critical: Capture actual current input values and replace inputs with spans
-    // This ensures the PDF reflects what's currently typed on the screen
+    // Capture current values from the real DOM
     const originalInputs = originalContent.querySelectorAll('input');
     const clonedInputs = cloned.querySelectorAll('input');
     originalInputs.forEach((input, index) => {
       const val = (input as HTMLInputElement).value;
       const span = document.createElement('span');
       span.textContent = val;
-      // Inherit the exact Tailwind classes for alignment and weight
       span.className = input.className;
       span.style.display = 'inline-block';
       span.style.width = '100%';
       span.style.border = 'none';
       span.style.background = 'transparent';
-      // Replace in cloned node
       if (clonedInputs[index]) {
         clonedInputs[index].parentNode?.replaceChild(span, clonedInputs[index]);
       }
     });
 
-    // Remove UI helpers (buttons, labels like "* 자유롭게 수정하세요")
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
     doc.write(`
@@ -464,23 +459,27 @@ const App: React.FC = () => {
             }
             .content-box { 
               width: 100%; 
-              max-width: 185mm; 
-              max-height: 277mm;
+              max-width: 180mm; 
+              max-height: 275mm;
               background: white;
               border: 1px solid #e5e7eb;
-              border-radius: 24px;
-              padding: 40px;
+              border-radius: 20px;
+              padding: 30px;
               box-sizing: border-box;
               box-shadow: none !important;
-              overflow: hidden; /* Prevent 2nd page spill */
+              overflow: hidden;
             }
             table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 10px 8px; font-size: 15px; color: #1c1917; }
-            h2 { font-size: 28px !important; margin-bottom: 8px !important; }
+            .report-row td { padding: 8px 6px; font-size: 14px; color: #1c1917; }
+            h2 { font-size: 24px !important; margin-bottom: 6px !important; }
+            p { font-size: 10px !important; }
             .no-print { display: none !important; }
-            /* Styling for replaced inputs */
             span.text-right { text-align: right; }
             span.text-left { text-align: left; }
+            /* Compress grid and summary areas */
+            .p-6 { padding: 1.25rem !important; }
+            .p-5 { padding: 1rem !important; }
+            .p-4 { padding: 0.75rem !important; }
           </style>
         </head>
         <body>
