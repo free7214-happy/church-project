@@ -405,23 +405,26 @@ const App: React.FC = () => {
     const cloned = originalContent.cloneNode(true) as HTMLElement;
 
     // Critical: Capture actual current input values and replace inputs with spans
+    // This ensures the PDF reflects what's currently typed on the screen
     const originalInputs = originalContent.querySelectorAll('input');
     const clonedInputs = cloned.querySelectorAll('input');
     originalInputs.forEach((input, index) => {
       const val = (input as HTMLInputElement).value;
       const span = document.createElement('span');
       span.textContent = val;
-      // Inherit alignment and style
+      // Inherit the exact Tailwind classes for alignment and weight
       span.className = input.className;
       span.style.display = 'inline-block';
       span.style.width = '100%';
+      span.style.border = 'none';
+      span.style.background = 'transparent';
       // Replace in cloned node
       if (clonedInputs[index]) {
         clonedInputs[index].parentNode?.replaceChild(span, clonedInputs[index]);
       }
     });
 
-    // Remove UI helpers
+    // Remove UI helpers (buttons, labels like "* 자유롭게 수정하세요")
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
     doc.write(`
@@ -456,27 +459,28 @@ const App: React.FC = () => {
               display: flex;
               align-items: center;
               justify-content: center;
-              padding: 15mm;
+              padding: 10mm;
               box-sizing: border-box;
             }
             .content-box { 
               width: 100%; 
-              max-width: 180mm; 
-              max-height: 267mm;
+              max-width: 185mm; 
+              max-height: 277mm;
               background: white;
-              border: 1px solid #f3f4f6;
+              border: 1px solid #e5e7eb;
               border-radius: 24px;
               padding: 40px;
               box-sizing: border-box;
               box-shadow: none !important;
-              overflow: hidden;
+              overflow: hidden; /* Prevent 2nd page spill */
             }
             table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 12px 10px; font-size: 15px; color: #1c1917; }
+            .report-row td { padding: 10px 8px; font-size: 15px; color: #1c1917; }
             h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
-            /* Force static spans to look like the UI */
+            /* Styling for replaced inputs */
             span.text-right { text-align: right; }
+            span.text-left { text-align: left; }
           </style>
         </head>
         <body>
