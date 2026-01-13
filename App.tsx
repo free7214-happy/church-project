@@ -402,7 +402,15 @@ const App: React.FC = () => {
     if (!doc) return;
     
     const cloned = content.cloneNode(true) as HTMLElement;
+    // Remove UI helpers during printing
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+    // Convert inputs to static text for clear printing
+    cloned.querySelectorAll('input').forEach(input => {
+      const span = document.createElement('span');
+      span.textContent = (input as HTMLInputElement).value;
+      span.className = input.className;
+      input.parentNode?.replaceChild(span, input);
+    });
 
     doc.write(`
       <html>
@@ -411,29 +419,63 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { size: A4; margin: 0; }
-            body { 
-              font-family: 'Pretendard', sans-serif; margin: 0; padding: 0; background: white; 
-              -webkit-print-color-adjust: exact; print-color-adjust: exact; 
-              display: flex; align-items: center; justify-content: center; width: 210mm; height: 297mm;
+            @page { 
+              size: A4 portrait; 
+              margin: 0; 
             }
-            .print-container { width: 100%; max-width: 190mm; padding: 20mm; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
+            html, body { 
+              margin: 0; 
+              padding: 0; 
+              height: 100%; 
+              width: 100%; 
+              background: white; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact;
+            }
+            body { 
+              font-family: 'Pretendard', sans-serif; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+            }
+            .print-wrapper {
+              width: 210mm;
+              height: 297mm;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              padding: 10mm;
+              box-sizing: border-box;
+            }
+            .content-box { 
+              width: 100%; 
+              max-width: 190mm; 
+              max-height: 277mm;
+              background: white;
+              border: 1px solid #f3f4f6;
+              border-radius: 24px;
+              padding: 40px;
+              box-sizing: border-box;
+              box-shadow: none !important;
+              overflow: hidden;
+            }
             table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #e5e7eb; }
+            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
-            .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
-            input { border: none !important; background: transparent !important; pointer-events: none !important; text-align: right !important; }
           </style>
         </head>
         <body>
-          <div class="print-container">
-            ${cloned.innerHTML}
+          <div class="print-wrapper">
+            <div class="content-box">
+              ${cloned.innerHTML}
+            </div>
           </div>
           <script>
             window.onload = () => {
               window.focus();
               window.print();
-              setTimeout(() => { window.frameElement.remove(); }, 1000);
+              setTimeout(() => { window.frameElement.remove(); }, 500);
             };
           </script>
         </body>
@@ -774,7 +816,7 @@ const App: React.FC = () => {
               
               <div className="flex flex-col gap-3 no-print">
                 <button 
-                  onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(편집)')}
+                  onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(보고)')}
                   className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"
                 >
                   <Printer size={16} />
@@ -885,7 +927,6 @@ const App: React.FC = () => {
                     {data.bankDeposits && data.bankDeposits.length > 0 ? (
                       data.bankDeposits.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl group overflow-hidden">
-                          {/* 항목명 클릭 시 삭제 기능 실행 */}
                           <div 
                             onClick={() => setModal({ type: 'delete_bank_record', isOpen: true, detailIndex: idx, category: item.name })}
                             className="flex items-center gap-3 flex-1 min-w-0 mr-4 cursor-pointer hover:bg-stone-100 p-1 rounded-lg transition-colors"
@@ -898,7 +939,6 @@ const App: React.FC = () => {
                               <span className="text-[10px] font-mono text-stone-300 font-bold uppercase tracking-tighter ml-2 shrink-0">{item.date}</span>
                             </div>
                           </div>
-                          {/* 금액 우측 정렬 유지 및 순잔액과 끝선 일치 */}
                           <div className="shrink-0 flex items-center pr-1">
                             <span className={`text-[13px] font-black text-right min-w-[100px] ${item.type === 'withdraw' ? 'text-rose-500' : 'text-emerald-600'}`}>
                               {item.type === 'withdraw' ? '-' : '+'}₩{item.amount.toLocaleString()}
