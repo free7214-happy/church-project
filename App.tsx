@@ -405,9 +405,7 @@ const App: React.FC = () => {
     if (!doc) return;
     
     const cloned = content.cloneNode(true) as HTMLElement;
-    // Remove UI helpers during printing
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
-    // Convert inputs to static text for clear printing
     cloned.querySelectorAll('input').forEach(input => {
       const span = document.createElement('span');
       span.textContent = (input as HTMLInputElement).value;
@@ -424,46 +422,11 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { 
-              size: A4 portrait; 
-              margin: 0; 
-            }
-            html, body { 
-              margin: 0; 
-              padding: 0; 
-              height: 100%; 
-              width: 100%; 
-              background: white; 
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact;
-            }
-            body { 
-              font-family: 'Pretendard', sans-serif; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
-            }
-            .print-wrapper {
-              width: 210mm;
-              height: 297mm;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              padding: 10mm;
-              box-sizing: border-box;
-            }
-            .content-box { 
-              width: 100%; 
-              max-width: 190mm; 
-              max-height: 277mm;
-              background: white;
-              border: 1px solid #f3f4f6;
-              border-radius: 24px;
-              padding: 40px;
-              box-sizing: border-box;
-              box-shadow: none !important;
-              overflow: hidden;
-            }
+            @page { size: A4 portrait; margin: 0; }
+            html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { font-family: 'Pretendard', sans-serif; display: flex; align-items: center; justify-content: center; }
+            .print-wrapper { width: 210mm; height: 297mm; display: flex; align-items: center; justify-content: center; padding: 10mm; box-sizing: border-box; }
+            .content-box { width: 100%; max-width: 190mm; max-height: 277mm; background: white; border: 1px solid #f3f4f6; border-radius: 24px; padding: 40px; box-sizing: border-box; box-shadow: none !important; overflow: hidden; }
             table { width: 100%; border-collapse: collapse; }
             .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
             ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
@@ -473,9 +436,7 @@ const App: React.FC = () => {
         </head>
         <body>
           <div class="print-wrapper">
-            <div class="content-box">
-              ${cloned.innerHTML}
-            </div>
+            <div class="content-box">${cloned.innerHTML}</div>
           </div>
           <script>
             window.onload = () => {
@@ -737,10 +698,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button 
-                onClick={() => handlePrintTarget('report-original', '연합성회 재정결산서(원본)')}
-                className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm"
-              >
+              <button onClick={() => handlePrintTarget('report-original', '연합성회 재정결산서(원본)')} className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm">
                 <Printer size={16} />
                 <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
               </button>
@@ -749,12 +707,7 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div id="report-editable" className="bg-white p-6 sm:p-10 border border-indigo-100 rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
                 <div className="text-center mb-10">
-                  <input 
-                    type="text"
-                    value={reportTitle}
-                    onChange={(e) => setReportTitle(e.target.value)}
-                    className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1"
-                  />
+                  <input type="text" value={reportTitle} onChange={(e) => setReportTitle(e.target.value)} className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1" />
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
@@ -780,23 +733,10 @@ const App: React.FC = () => {
                         {Object.keys(data.expenses).map((cat) => (
                           <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
                             <td className="p-0">
-                               <input 
-                                type="text"
-                                value={data.report2Names[cat] !== undefined ? data.report2Names[cat] : cat}
-                                onChange={(e) => handleLocalReportNameEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-left font-black text-stone-800 text-[14px] outline-none px-3 py-3 border-none transition-colors focus:bg-indigo-50/50 focus:text-indigo-900"
-                                placeholder="항목명 입력"
-                              />
+                               <input type="text" value={data.report2Names[cat] !== undefined ? data.report2Names[cat] : cat} onChange={(e) => handleLocalReportNameEdit(cat, e.target.value)} className="w-full bg-transparent text-left font-black text-stone-800 text-[14px] outline-none px-3 py-3 border-none transition-colors focus:bg-indigo-50/50 focus:text-indigo-900" placeholder="항목명 입력" />
                             </td>
                             <td className="p-0">
-                              <input 
-                                type="text"
-                                inputMode="numeric"
-                                value={(data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0)).toLocaleString()}
-                                onChange={(e) => handleLocalReportEdit(cat, e.target.value)}
-                                className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600"
-                                onFocus={(e) => e.target.select()}
-                              />
+                              <input type="text" inputMode="numeric" value={(data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0)).toLocaleString()} onChange={(e) => handleLocalReportEdit(cat, e.target.value)} className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600" onFocus={(e) => e.target.select()} />
                             </td>
                           </tr>
                         ))}
@@ -823,25 +763,11 @@ const App: React.FC = () => {
               </div>
               
               <div className="flex flex-col gap-3 no-print">
-                <button 
-                  onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(보고)')}
-                  className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"
-                >
+                <button onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(보고)')} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm">
                   <Printer size={16} />
                   <span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span>
                 </button>
-                <button 
-                  onClick={() => {
-                    setData(prev => ({
-                      ...prev,
-                      report2Expenses: { ...prev.expenses },
-                      report2Names: {}, // Reset customized names
-                      lastUpdated: new Date().toISOString()
-                    }));
-                    setReportTitle('연합성회 재정결산서 (보고)');
-                  }}
-                  className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50"
-                >
+                <button onClick={() => { setData(prev => ({ ...prev, report2Expenses: { ...prev.expenses }, report2Names: {}, lastUpdated: new Date().toISOString() })); setReportTitle('연합성회 재정결산서 (보고)'); }} className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50">
                   <RotateCcw size={13} className="text-rose-500" />
                   항목 이름 및 금액 원본으로 초기화
                 </button>
@@ -936,36 +862,25 @@ const App: React.FC = () => {
                     {data.bankDeposits && data.bankDeposits.length > 0 ? (
                       data.bankDeposits.map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center p-3 bg-stone-50 rounded-xl group overflow-hidden">
-                          <div 
-                            onClick={() => setModal({ type: 'delete_bank_record', isOpen: true, detailIndex: idx, category: item.name })}
-                            className="flex items-center gap-3 flex-1 min-w-0 mr-4 cursor-pointer hover:bg-stone-100 p-1 rounded-lg transition-colors"
-                          >
-                            <div className={`p-1.5 rounded-lg shrink-0 ${item.type === 'deposit' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-500'}`}>
-                              {item.type === 'deposit' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                            </div>
+                          <div onClick={() => setModal({ type: 'delete_bank_record', isOpen: true, detailIndex: idx, category: item.name })} className="flex items-center gap-3 flex-1 min-w-0 mr-4 cursor-pointer hover:bg-stone-100 p-1 rounded-lg transition-colors">
+                            <div className={`p-1.5 rounded-lg shrink-0 ${item.type === 'deposit' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-500'}`}>{item.type === 'deposit' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}</div>
                             <div className="flex items-center min-w-0">
                               <span className="text-[13px] font-bold text-stone-700 leading-tight truncate">{item.name}</span>
                               <span className="text-[10px] font-mono text-stone-300 font-bold uppercase tracking-tighter ml-2 shrink-0">{item.date}</span>
                             </div>
                           </div>
                           <div className="shrink-0 flex items-center pr-1">
-                            <span className={`text-[13px] font-black text-right min-w-[100px] ${item.type === 'withdraw' ? 'text-rose-500' : 'text-emerald-600'}`}>
-                              {item.type === 'withdraw' ? '-' : '+'}₩{item.amount.toLocaleString()}
-                            </span>
+                            <span className={`text-[13px] font-black text-right min-w-[100px] ${item.type === 'withdraw' ? 'text-rose-500' : 'text-emerald-600'}`}>{item.type === 'withdraw' ? '-' : '+'}₩{item.amount.toLocaleString()}</span>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="text-center py-6 text-stone-300 text-xs font-bold bg-stone-50/50 rounded-2xl border border-dashed border-stone-100">
-                        기록된 통장 내역이 없습니다.
-                      </div>
+                      <div className="text-center py-6 text-stone-300 text-xs font-bold bg-stone-50/50 rounded-2xl border border-dashed border-stone-100">기록된 통장 내역이 없습니다.</div>
                     )}
                   </div>
                   <div className="p-4 bg-indigo-50/30 border border-indigo-100/50 rounded-2xl flex justify-between items-center mt-4">
                     <span className="text-sm font-bold text-stone-600">통장 순잔액</span>
-                    <span className="text-lg font-black text-indigo-600 text-right flex-1 pr-1">
-                      {totalBankNet >= 0 ? '+' : ''}₩{totalBankNet.toLocaleString()}
-                    </span>
+                    <span className="text-lg font-black text-indigo-600 text-right flex-1 pr-1">{totalBankNet >= 0 ? '+' : ''}₩{totalBankNet.toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="pt-4 mt-2 border-t border-stone-100 flex justify-between items-center">
@@ -992,9 +907,7 @@ const App: React.FC = () => {
                 {tab === TabType.REPORT && <FileText size={20} className={isActive ? 'text-rose-500' : 'text-stone-800'} />}
                 {tab === TabType.CALCULATION && <Landmark size={20} className={isActive ? 'text-rose-500' : 'text-stone-800'} />}
               </div>
-              <span className={`text-[10px] font-black tracking-tighter transition-colors ${isActive ? (isPersonalTab ? 'text-indigo-600' : 'text-rose-600') : 'text-stone-800'}`}>
-                {getTabLabel(tab)}
-              </span>
+              <span className={`text-[10px] font-black tracking-tighter transition-colors ${isActive ? (isPersonalTab ? 'text-indigo-600' : 'text-rose-600') : 'text-stone-800'}`}>{getTabLabel(tab)}</span>
             </button>
           );
         })}
@@ -1014,16 +927,7 @@ const App: React.FC = () => {
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <input 
-                      type="number" 
-                      inputMode="numeric"
-                      value={data.attendance[modal.day!]?.[modal.time!] || ''} 
-                      onChange={(e) => handleUpdateAttendance(modal.day!, modal.time!, e.target.value)}
-                      className="flex-1 min-w-0 p-4 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-800 text-center text-3xl outline-none focus:bg-white focus:border-amber-400 transition-all"
-                      placeholder="0"
-                      autoFocus
-                      onFocus={(e) => e.target.select()}
-                    />
+                    <input type="number" inputMode="numeric" value={data.attendance[modal.day!]?.[modal.time!] || ''} onChange={(e) => handleUpdateAttendance(modal.day!, modal.time!, e.target.value)} className="flex-1 min-w-0 p-4 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-800 text-center text-3xl outline-none focus:bg-white focus:border-amber-400 transition-all" placeholder="0" autoFocus onFocus={(e) => e.target.select()} />
                     <span className="text-lg font-black text-stone-400 shrink-0">명</span>
                   </div>
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-2 py-4 bg-amber-400 text-white font-black rounded-2xl shadow-lg shadow-amber-100 active:scale-95 transition-transform">저장 완료</button>
@@ -1041,20 +945,14 @@ const App: React.FC = () => {
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
                 </div>
                 <div className="space-y-3">
-                  <button 
-                    onClick={() => currentFileName ? executeDownload(currentFileName) : setModal({ ...modal, type: 'export_filename' })}
-                    className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl flex items-center gap-4 active:bg-orange-50 transition-colors group"
-                  >
+                  <button onClick={() => currentFileName ? executeDownload(currentFileName) : setModal({ ...modal, type: 'export_filename' })} className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl flex items-center gap-4 active:bg-orange-50 transition-colors group">
                     <div className="p-3 bg-white rounded-xl shadow-sm text-stone-400 group-active:text-rose-500"><Save size={24} /></div>
                     <div className="text-left">
                       <p className="text-sm font-black text-stone-800">현재 파일에 저장</p>
                       <p className="text-[10px] font-bold text-stone-400">{currentFileName ? `${currentFileName}.json` : '불러온 파일 없음 (신규 저장)'}</p>
                     </div>
                   </button>
-                  <button 
-                    onClick={() => setModal({ ...modal, type: 'export_filename' })}
-                    className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl flex items-center gap-4 active:bg-orange-50 transition-colors group"
-                  >
+                  <button onClick={() => setModal({ ...modal, type: 'export_filename' })} className="w-full p-5 bg-stone-50 border border-stone-100 rounded-2xl flex items-center gap-4 active:bg-orange-50 transition-colors group">
                     <div className="p-3 bg-white rounded-xl shadow-sm text-stone-400 group-active:text-amber-500"><Download size={24} /></div>
                     <div className="text-left">
                       <p className="text-sm font-black text-stone-800">다른 이름으로 저장</p>
@@ -1071,23 +969,8 @@ const App: React.FC = () => {
                   <h3 className="text-xl font-black text-stone-800">다른 이름으로 저장</h3>
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
                 </div>
-                <input 
-                  id="filenameInput" 
-                  type="text" 
-                  className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-rose-400" 
-                  placeholder="파일 이름" 
-                  defaultValue={currentFileName || `church_finance_${new Date().toISOString().split('T')[0]}`} 
-                  autoFocus 
-                />
-                <button 
-                  onClick={() => {
-                    const filename = (document.getElementById('filenameInput') as HTMLInputElement).value;
-                    executeDownload(filename);
-                  }} 
-                  className="w-full py-4 bg-rose-400 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform"
-                >
-                  내보내기 실행
-                </button>
+                <input id="filenameInput" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-rose-400" placeholder="파일 이름" defaultValue={currentFileName || `church_finance_${new Date().toISOString().split('T')[0]}`} autoFocus />
+                <button onClick={() => { const filename = (document.getElementById('filenameInput') as HTMLInputElement).value; executeDownload(filename); }} className="w-full py-4 bg-rose-400 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">내보내기 실행</button>
               </div>
             )}
 
@@ -1100,11 +983,7 @@ const App: React.FC = () => {
                   </div>
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full active:bg-stone-100 transition-colors"><X size={20} /></button>
                 </div>
-                <DetailForm 
-                  onAdd={(name, amt, syncCat) => handleUpdateDetail(modal.category!, name, amt, modal.type === 'personal_detail', syncCat)} 
-                  isPersonal={modal.type === 'personal_detail'}
-                  churchCategories={Object.keys(data.expenses)}
-                />
+                <DetailForm onAdd={(name, amt, syncCat) => handleUpdateDetail(modal.category!, name, amt, modal.type === 'personal_detail', syncCat)} isPersonal={modal.type === 'personal_detail'} churchCategories={Object.keys(data.expenses)} />
               </div>
             )}
 
@@ -1122,6 +1001,7 @@ const App: React.FC = () => {
                    initialAmount={data[modal.isPersonal ? 'personalExpenseDetails' : 'expenseDetails'][modal.category!][modal.detailIndex!].amount}
                    churchCategories={Object.keys(data.expenses)}
                    isPersonal={modal.isPersonal}
+                   data={data}
                    onSave={(name, amt, syncCat) => handleEditDetail(modal.category!, modal.detailIndex!, name, amt, !!modal.isPersonal, syncCat)}
                 />
               </div>
@@ -1141,36 +1021,19 @@ const App: React.FC = () => {
                   {bankType === 'deposit' ? (
                     <>
                       <input id="bankName" type="text" placeholder="입금 내역 명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" autoFocus />
-                      <input 
-                        type="text" 
-                        inputMode="numeric" 
-                        placeholder="금액 (원)" 
-                        value={bankAmountDisplay}
-                        onChange={(e) => {
-                          const val = e.target.value.replace(/[^0-9]/g, '');
-                          setBankAmountDisplay(val === '' ? '' : Number(val).toLocaleString());
-                        }}
-                        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200" 
-                      />
+                      <input type="text" inputMode="numeric" placeholder="금액 (원)" value={bankAmountDisplay} onChange={(e) => { const val = e.target.value.replace(/[^0-9]/g, ''); setBankAmountDisplay(val === '' ? '' : Number(val).toLocaleString()); }} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200" />
                     </>
                   ) : (
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">출금할 개인지출 항목 선택</p>
-                        <select 
-                          value={selectedPersonalCat} 
-                          onChange={e => setSelectedPersonalCat(e.target.value)} 
-                          className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-800 appearance-none transition-colors focus:border-stone-200"
-                        >
+                        <select value={selectedPersonalCat} onChange={e => setSelectedPersonalCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-800 appearance-none transition-colors focus:border-stone-200">
                           <option value="">출금 항목 선택</option>
                           {Object.keys(data.personalExpenses || {}).map(cat => (
-                            <option key={cat} value={cat}>
-                              {cat} (₩{(data.personalExpenses[cat] || 0).toLocaleString()})
-                            </option>
+                            <option key={cat} value={cat}>{cat} (₩{(data.personalExpenses[cat] || 0).toLocaleString()})</option>
                           ))}
                         </select>
                       </div>
-                      
                       {selectedPersonalCat && (
                         <div className="p-4 bg-rose-50 rounded-2xl border border-rose-100">
                           <p className="text-[11px] font-bold text-rose-400 uppercase tracking-widest mb-1">출금 예정 금액</p>
@@ -1180,24 +1043,7 @@ const App: React.FC = () => {
                       )}
                     </div>
                   )}
-
-                  <button onClick={() => {
-                    const nameInput = document.getElementById('bankName') as HTMLInputElement | null;
-                    const name = nameInput ? nameInput.value : '';
-                    const amount = parseInt(bankAmountDisplay.replace(/,/g, ''));
-                    
-                    if (bankType === 'withdraw' && !selectedPersonalCat) {
-                      alert('출금 항목을 선택해주세요.');
-                      return;
-                    }
-                    if (bankType === 'deposit' && (!name || !amount)) {
-                      alert('명칭과 금액을 입력해주세요.');
-                      return;
-                    }
-                    handleAddBankRecord(name, amount, bankType, selectedPersonalCat);
-                  }} className={`w-full py-4 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-transform ${bankType === 'withdraw' ? 'bg-rose-500 shadow-rose-100' : 'bg-emerald-500 shadow-emerald-100'}`}>
-                    {bankType === 'withdraw' ? '출금 기록 저장' : '입금 기록 저장'}
-                  </button>
+                  <button onClick={() => { const nameInput = document.getElementById('bankName') as HTMLInputElement | null; const name = nameInput ? nameInput.value : ''; const amount = parseInt(bankAmountDisplay.replace(/,/g, '')); if (bankType === 'withdraw' && !selectedPersonalCat) { alert('출금 항목을 선택해주세요.'); return; } if (bankType === 'deposit' && (!name || !amount)) { alert('명칭과 금액을 입력해주세요.'); return; } handleAddBankRecord(name, amount, bankType, selectedPersonalCat); }} className={`w-full py-4 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-transform ${bankType === 'withdraw' ? 'bg-rose-500 shadow-rose-100' : 'bg-emerald-500 shadow-emerald-100'}`}>{bankType === 'withdraw' ? '출금 기록 저장' : '입금 기록 저장'}</button>
                 </div>
               </div>
             )}
@@ -1228,14 +1074,7 @@ const App: React.FC = () => {
                     <div key={denom} className="flex items-center justify-between">
                       <span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span>
                       <div className="flex items-center gap-3">
-                        <input 
-                          type="number" 
-                          inputMode="numeric"
-                          value={data.counting[modal.day!]?.[modal.time!]?.[denom] || ''} 
-                          onChange={(e) => handleUpdateCounting(modal.day!, modal.time!, denom, e.target.value)}
-                          className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400 transition-all"
-                          placeholder="0"
-                        />
+                        <input type="number" inputMode="numeric" value={data.counting[modal.day!]?.[modal.time!]?.[denom] || ''} onChange={(e) => handleUpdateCounting(modal.day!, modal.time!, denom, e.target.value)} className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400 transition-all" placeholder="0" />
                         <span className="text-xs font-bold text-stone-300">매</span>
                       </div>
                     </div>
@@ -1260,14 +1099,7 @@ const App: React.FC = () => {
                      <div key={denom} className="flex items-center justify-between">
                         <span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span>
                         <div className="flex items-center gap-3">
-                          <input 
-                            type="number" 
-                            inputMode="numeric"
-                            value={data.counting['__manual__']?.['__cash__']?.[denom] || ''} 
-                            onChange={(e) => handleUpdateManualCash(denom, e.target.value)}
-                            className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400"
-                            placeholder="0"
-                          />
+                          <input type="number" inputMode="numeric" value={data.counting['__manual__']?.['__cash__']?.[denom] || ''} onChange={(e) => handleUpdateManualCash(denom, e.target.value)} className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400" placeholder="0" />
                           <span className="text-xs font-bold text-stone-300">매</span>
                         </div>
                      </div>
@@ -1371,17 +1203,12 @@ const App: React.FC = () => {
 const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: string, amt: number, syncCat?: string) => void, isPersonal: boolean, churchCategories: string[] }) => {
   const [name, setName] = useState('');
   const [amountDisplay, setAmountDisplay] = useState('');
+  const [syncCat, setSyncCat] = useState('');
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
-    if (value === '') {
-      setAmountDisplay('');
-      return;
-    }
-    setAmountDisplay(Number(value).toLocaleString());
+    setAmountDisplay(value === '' ? '' : Number(value).toLocaleString());
   };
-
-  const [syncCat, setSyncCat] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1395,23 +1222,8 @@ const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: str
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input 
-        type="text" 
-        value={name} 
-        onChange={e => setName(e.target.value)} 
-        placeholder="항목 명칭 (예: 꽃꽂이, 간식비)" 
-        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" 
-        required 
-      />
-      <input 
-        type="text" 
-        inputMode="numeric" 
-        value={amountDisplay} 
-        onChange={handleAmountChange} 
-        placeholder="금액 (예: 50,000)" 
-        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" 
-        required 
-      />
+      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="항목 명칭 (예: 꽃꽂이, 간식비)" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" required />
+      <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} placeholder="금액 (예: 50,000)" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" required />
       {isPersonal && (
         <div className="space-y-2">
           <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결</p>
@@ -1426,18 +1238,24 @@ const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: str
   );
 };
 
-const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPersonal, onSave }: { initialName: string, initialAmount: number, churchCategories: string[], isPersonal?: boolean, onSave: (name: string, amt: number, syncCat?: string) => void }) => {
+const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPersonal, data, onSave }: { initialName: string, initialAmount: number, churchCategories: string[], isPersonal?: boolean, data: OfferingData, onSave: (name: string, amt: number, syncCat?: string) => void }) => {
   const [name, setName] = useState(initialName);
   const [amountDisplay, setAmountDisplay] = useState(initialAmount.toLocaleString());
   const [syncCat, setSyncCat] = useState('');
 
+  const currentSyncCategory = useMemo(() => {
+    if (!isPersonal) return '';
+    for (const [churchCat, details] of Object.entries(data.expenseDetails)) {
+      if (details.some(d => d.name === initialName)) {
+        return churchCat;
+      }
+    }
+    return '';
+  }, [isPersonal, data.expenseDetails, initialName]);
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/[^0-9]/g, '');
-    if (value === '') {
-      setAmountDisplay('');
-      return;
-    }
-    setAmountDisplay(Number(value).toLocaleString());
+    setAmountDisplay(value === '' ? '' : Number(value).toLocaleString());
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1449,31 +1267,22 @@ const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPerson
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input 
-        type="text" 
-        value={name} 
-        onChange={e => setName(e.target.value)} 
-        placeholder="항목 명칭" 
-        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" 
-        required 
-        autoFocus
-      />
-      <input 
-        type="text" 
-        inputMode="numeric" 
-        value={amountDisplay} 
-        onChange={handleAmountChange} 
-        placeholder="금액" 
-        className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" 
-        required 
-      />
+      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="항목 명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" required autoFocus />
+      <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} placeholder="금액" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" required />
       {isPersonal && (
         <div className="space-y-2">
           <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결 (수정)</p>
-          <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
-            <option value="">기존 연결 유지/안함</option>
-            {churchCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-          </select>
+          <div className="relative">
+            <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
+              <option value="">{currentSyncCategory ? `현재 연결: ${currentSyncCategory}` : '현재 연결 없음'}</option>
+              {churchCategories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300">
+              <ChevronRight size={16} className="rotate-90" />
+            </div>
+          </div>
         </div>
       )}
       <button type="submit" className={`w-full py-4 text-white font-black rounded-2xl shadow-lg transition-all active:scale-95 ${isPersonal ? 'bg-indigo-500 shadow-indigo-100' : 'bg-rose-400 shadow-rose-100'}`}>수정 완료</button>
