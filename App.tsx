@@ -424,6 +424,8 @@ const App: React.FC = () => {
     // Remove UI helpers
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
 
+    const isEditableReport = id === 'report-editable';
+
     doc.write(`
       <html>
         <head>
@@ -446,11 +448,8 @@ const App: React.FC = () => {
             }
             body { 
               font-family: 'Pretendard', sans-serif; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
             }
-            .print-wrapper {
+            .page {
               width: 210mm;
               height: 297mm;
               display: flex;
@@ -458,6 +457,7 @@ const App: React.FC = () => {
               justify-content: center;
               padding: 15mm;
               box-sizing: border-box;
+              page-break-after: always;
             }
             .content-box { 
               width: 100%; 
@@ -475,12 +475,19 @@ const App: React.FC = () => {
             .report-row td { padding: 12px 10px; font-size: 15px; color: #1c1917; }
             h2 { font-size: 28px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
-            /* Force static spans to look like the UI */
             span.text-right { text-align: right; }
+            
+            /* Hidden page logic to ensure browser picks up correct sheet */
+            .hidden-page { display: none; }
+            @media print {
+               .hidden-page { display: flex; }
+               /* 만약 보고용인 경우 첫 번째 페이지(빈 페이지 등)를 강제로 넘기거나 가림 */
+               ${isEditableReport ? '.first-page { display: none !important; }' : ''}
+            }
           </style>
         </head>
         <body>
-          <div class="print-wrapper">
+          <div class="page ${isEditableReport ? 'editable-page' : 'first-page'}">
             <div class="content-box">
               ${cloned.innerHTML}
             </div>
