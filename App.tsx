@@ -77,6 +77,13 @@ const App: React.FC = () => {
   const currentNetBalance = Number(totalAccumulatedOffering) - Number(totalExpenses);
   const settlingDifference = physicalCashTotal - currentNetBalance;
 
+  // 특정 세부 항목이 개인지출과 연동되어 있는지 확인하는 헬퍼
+  const isLinkedToPersonal = (itemName: string) => {
+    return Object.values(data.personalExpenseDetails).some(details => 
+      details.some(d => d.name === itemName)
+    );
+  };
+
   const localReportTotalExpenses = useMemo(() => {
     return Object.keys(data.expenses).reduce((sum, cat) => {
       const val = data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0);
@@ -279,14 +286,12 @@ const App: React.FC = () => {
       newDetails[index] = { ...newDetails[index], name, amount: Math.max(0, amount) };
       const newPersonalTotal = newDetails.reduce((s, i) => s + i.amount, 0);
       
-      // 깊은 복사 수행
       let nextExpenseDetails = { ...prev.expenseDetails };
       let nextExpenses = { ...prev.expenses };
       let nextPersonalExpenseDetails = { ...prev.personalExpenseDetails, [cat]: newDetails };
       let nextPersonalExpenses = { ...prev.personalExpenses, [cat]: newPersonalTotal };
 
       if (isPersonal) {
-        // 1. 기존 연결 카테고리 탐색 (이름 기준)
         let oldChurchCat = "";
         Object.keys(prev.expenseDetails).forEach(c => {
           if (prev.expenseDetails[c].some(d => d.name === oldItem.name)) {
@@ -294,17 +299,14 @@ const App: React.FC = () => {
           }
         });
 
-        // 사용자가 명시적으로 카테고리를 선택하지 않았으면(빈 문자열) 기존 카테고리 유지
         const targetChurchCat = syncWithChurchCat || oldChurchCat;
 
-        // 2. 카테고리가 변경되었거나 연결 해제된 경우 기존 위치에서 삭제
         if (oldChurchCat && oldChurchCat !== targetChurchCat) {
           const list = nextExpenseDetails[oldChurchCat].filter(d => d.name !== oldItem.name);
           nextExpenseDetails[oldChurchCat] = list;
           nextExpenses[oldChurchCat] = list.reduce((s, i) => s + i.amount, 0);
         }
 
-        // 3. 새로운 또는 유지된 연결 카테고리가 있는 경우 업데이트 또는 추가
         if (targetChurchCat && nextExpenses[targetChurchCat] !== undefined) {
           const list = [...(nextExpenseDetails[targetChurchCat] || [])];
           const existIdx = list.findIndex(d => d.name === oldItem.name);
@@ -635,20 +637,42 @@ const App: React.FC = () => {
                   </div>
                   {data.expenseDetails[cat]?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-stone-50 space-y-2">
-                      {data.expenseDetails[cat].map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
-                          <span 
-                            onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })}
-                            className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-amber-500 transition-colors"
-                          >
-                            <span className="text-stone-300 text-lg">•</span> {item.name}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-stone-600 mr-2 text-[13px]">₩{item.amount.toLocaleString()}</span>
-                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
+                      {data.expenseDetails[cat].map((item, idx) => {
+                        const linked = isLinkedToPersonal(item.name);
+                        return (
+                          <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
+                            <span 
+                              onClick={() => {
+                                if (linked) {
+                                  alert("이 항목은 개인지출과 연동되어 있습니다. 개인지출 탭에서 수정해주세요.");
+                                  return;
+                                }
+                                setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false });
+                              }}
+                              className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-amber-500 transition-colors"
+                            >
+                              <span className="text-stone-300 text-lg">•</span> 
+                              {item.name}
+                              {linked && <User size={12} className="text-indigo-400 shrink-0" />}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-stone-600 mr-2 text-[13px]">₩{item.amount.toLocaleString()}</span>
+                              <button 
+                                onClick={() => {
+                                  if (linked) {
+                                    alert("이 항목은 개인지출과 연동되어 있습니다. 개인지출 탭에서 삭제해주세요.");
+                                    return;
+                                  }
+                                  setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false });
+                                }} 
+                                className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125"
+                              >
+                                ×
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1335,7 +1359,6 @@ const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPerson
     e.preventDefault();
     if (!name.trim() || !amountDisplay) return;
     const numericAmount = parseInt(amountDisplay.replace(/,/g, ''));
-    // syncCat이 빈 문자열이면 handleEditDetail에서 currentSyncCategory를 유지함
     onSave(name, numericAmount, syncCat);
   };
 
