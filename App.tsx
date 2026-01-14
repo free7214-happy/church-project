@@ -440,7 +440,8 @@ const App: React.FC = () => {
             .content-box { width: 100%; max-width: 190mm; max-height: 277mm; background: white; border: 1px solid #f3f4f6; border-radius: 24px; padding: 40px; box-sizing: border-box; box-shadow: none !important; overflow: hidden; }
             table { width: 100%; border-collapse: collapse; }
             .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
-            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
+            .report-row .amount-cell { text-align: center !important; }
+            .report-row .amount-text { display: inline-block; width: 120px; text-align: right; }
             h2 { font-size: 24px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
           </style>
@@ -677,15 +678,17 @@ const App: React.FC = () => {
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-2/3 text-[14px]">항목</th>
-                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
+                          <th className="border-b border-stone-200 p-3 text-center font-black text-stone-600 w-1/2 text-[14px]">항목</th>
+                          <th className="border-b border-stone-200 p-3 text-center font-black text-stone-600 text-[14px]">금액 (원)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {getReportExpenses().map((item, i) => (
                           <tr key={i} className="border-b border-stone-100 last:border-b-0 report-row">
-                            <td className="p-3 font-black text-stone-800 text-[15px]">{item.cat}</td>
-                            <td className="p-3 text-right font-black text-stone-700 text-[15px]">{item.val.toLocaleString()}</td>
+                            <td className="p-3 font-black text-stone-800 text-[15px] text-center">{item.cat}</td>
+                            <td className="p-3 text-center font-black text-stone-700 text-[15px] amount-cell">
+                              <span className="inline-block w-[120px] text-right">{item.val.toLocaleString()}</span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -736,18 +739,20 @@ const App: React.FC = () => {
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="bg-stone-50/50">
-                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 text-[14px]">항목</th>
-                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
+                          <th className="border-b border-stone-200 p-3 text-center font-black text-stone-600 text-[14px] w-1/2">항목</th>
+                          <th className="border-b border-stone-200 p-3 text-center font-black text-stone-600 text-[14px]">금액 (원)</th>
                         </tr>
                       </thead>
                       <tbody>
                         {Object.keys(data.expenses).map((cat) => (
                           <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
                             <td className="p-0">
-                               <input type="text" value={data.report2Names[cat] !== undefined ? data.report2Names[cat] : cat} onChange={(e) => handleLocalReportNameEdit(cat, e.target.value)} className="w-full bg-transparent text-left font-black text-stone-800 text-[14px] outline-none px-3 py-3 border-none transition-colors focus:bg-indigo-50/50 focus:text-indigo-900" placeholder="항목명 입력" />
+                               <input type="text" value={data.report2Names[cat] !== undefined ? data.report2Names[cat] : cat} onChange={(e) => handleLocalReportNameEdit(cat, e.target.value)} className="w-full bg-transparent text-center font-black text-stone-800 text-[14px] outline-none px-3 py-3 border-none transition-colors focus:bg-indigo-50/50 focus:text-indigo-900" placeholder="항목명 입력" />
                             </td>
-                            <td className="p-0">
-                              <input type="text" inputMode="numeric" value={(data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0)).toLocaleString()} onChange={(e) => handleLocalReportEdit(cat, e.target.value)} className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600" onFocus={(e) => e.target.select()} />
+                            <td className="p-0 text-center amount-cell">
+                              <div className="inline-block w-[140px] text-right">
+                                <input type="text" inputMode="numeric" value={(data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0)).toLocaleString()} onChange={(e) => handleLocalReportEdit(cat, e.target.value)} className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600" onFocus={(e) => e.target.select()} />
+                              </div>
                             </td>
                           </tr>
                         ))}
