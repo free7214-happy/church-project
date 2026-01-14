@@ -164,7 +164,6 @@ const App: React.FC = () => {
       
       let nextData = { ...prev, bankDeposits: newList, lastUpdated: new Date().toISOString() };
       
-      // 만약 출금 기록을 삭제하는 것이라면, 개인지출의 [통장출금완료] 항목도 함께 제거
       if (record && record.type === 'withdraw') {
         const personalCat = record.name;
         if (nextData.personalExpenseDetails[personalCat]) {
@@ -307,28 +306,41 @@ const App: React.FC = () => {
       let nextPersonalExpenses = { ...prev.personalExpenses, [cat]: newPersonalTotal };
 
       if (isPersonal) {
+        // 정확한 항목 연동을 위해 이전 이름과 이전 금액이 정확히 일치하는 교회지출 항목을 찾음
         let oldChurchCat = "";
-        Object.keys(prev.expenseDetails).forEach(c => {
-          if (prev.expenseDetails[c].some(d => d.name === oldItem.name)) {
+        let foundIdx = -1;
+
+        for (const [c, details] of Object.entries(prev.expenseDetails)) {
+          const idx = details.findIndex(d => d.name === oldItem.name && d.amount === oldItem.amount);
+          if (idx > -1) {
             oldChurchCat = c;
+            foundIdx = idx;
+            break; 
           }
-        });
-
-        const targetChurchCat = syncWithChurchCat || oldChurchCat;
-
-        if (oldChurchCat && oldChurchCat !== targetChurchCat) {
-          const list = nextExpenseDetails[oldChurchCat].filter(d => d.name !== oldItem.name);
-          nextExpenseDetails[oldChurchCat] = list;
-          nextExpenses[oldChurchCat] = list.reduce((s, i) => s + i.amount, 0);
         }
 
+        const targetChurchCat = syncWithChurchCat === "NONE_DISCONNECT" ? "" : (syncWithChurchCat || oldChurchCat);
+
+        // 카테고리가 이동하는 경우 (기존 카테고리에서 삭제)
+        if (oldChurchCat && oldChurchCat !== targetChurchCat) {
+          const list = [...nextExpenseDetails[oldChurchCat]];
+          list.splice(foundIdx, 1);
+          nextExpenseDetails[oldChurchCat] = list;
+          nextExpenses[oldChurchCat] = list.reduce((s, i) => s + i.amount, 0);
+          
+          // 초기화 (이동 시 타겟 카테고리에 새로 추가해야 하므로)
+          foundIdx = -1; 
+        }
+
+        // 타겟 카테고리 업데이트
         if (targetChurchCat && nextExpenses[targetChurchCat] !== undefined) {
           const list = [...(nextExpenseDetails[targetChurchCat] || [])];
-          const existIdx = list.findIndex(d => d.name === oldItem.name);
           
-          if (existIdx > -1) {
-            list[existIdx] = { ...list[existIdx], name, amount: Math.max(0, amount) };
+          // 만약 같은 카테고리 내에서 수정하는 경우라면 기존 인덱스 사용
+          if (foundIdx > -1 && oldChurchCat === targetChurchCat) {
+            list[foundIdx] = { ...list[foundIdx], name, amount: Math.max(0, amount) };
           } else {
+            // 카테고리가 바뀌었거나 새로 연결하는 경우 리스트 끝에 추가
             const dateStr = newDetails[index].date || `${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
             list.push({ name, amount: Math.max(0, amount), date: dateStr });
           }
@@ -368,9 +380,14 @@ const App: React.FC = () => {
 
       if (isPersonal) {
         Object.keys(prev.expenseDetails).forEach(churchCat => {
-          const list = (nextData.expenseDetails[churchCat] || []).filter(d => d.name !== removedItem.name);
-          nextData.expenseDetails[churchCat] = list;
-          nextData.expenses[churchCat] = list.reduce((s, i) => s + i.amount, 0);
+          // 이름뿐 아니라 금액까지 확인하여 정확한 1개 레코드만 삭제하도록 함 (동일 순서 유지를 위해 인덱스 기반 splice)
+          const list = [...(nextData.expenseDetails[churchCat] || [])];
+          const matchIdx = list.findIndex(d => d.name === removedItem.name && d.amount === removedItem.amount);
+          if (matchIdx > -1) {
+            list.splice(matchIdx, 1);
+            nextData.expenseDetails[churchCat] = list;
+            nextData.expenses[churchCat] = list.reduce((s, i) => s + i.amount, 0);
+          }
         });
       }
 
