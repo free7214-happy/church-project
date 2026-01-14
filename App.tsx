@@ -579,7 +579,7 @@ const App: React.FC = () => {
                          <button onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: false })} className="p-1 text-stone-200 active:text-amber-400"><Edit3 size={14} /></button>
                          <button onClick={() => setModal({ type: 'delete_category', isOpen: true, category: cat, isPersonal: false })} className="p-1 text-stone-200 active:text-rose-400"><Trash2 size={14} /></button>
                       </div>
-                      <span className="text-[13px] font-bold text-rose-400">₩{(val || 0).toLocaleString()}</span>
+                      <span className="text-lg font-black text-rose-400">₩{(val || 0).toLocaleString()}</span>
                     </div>
                     <button onClick={() => setModal({ type: 'detail', isOpen: true, category: cat })} className="p-2 bg-rose-50 text-rose-400 rounded-xl active:bg-rose-100"><Plus size={20} /></button>
                   </div>
@@ -594,7 +594,7 @@ const App: React.FC = () => {
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-stone-600 font-bold mr-2">₩{item.amount.toLocaleString()}</span>
+                            <span className="font-black text-stone-600 mr-2 text-[13px]">₩{item.amount.toLocaleString()}</span>
                             <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
                           </div>
                         </div>
@@ -624,7 +624,7 @@ const App: React.FC = () => {
                          <button onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} className="p-1 text-stone-200 active:text-amber-400"><Edit3 size={14} /></button>
                          <button onClick={() => setModal({ type: 'delete_personal_category', isOpen: true, category: cat })} className="p-1 text-stone-200 active:text-rose-400"><Trash2 size={14} /></button>
                       </div>
-                      <span className="text-[13px] font-bold text-indigo-500">₩{(val || 0).toLocaleString()}</span>
+                      <span className="text-lg font-black text-indigo-500">₩{(val || 0).toLocaleString()}</span>
                     </div>
                     <button onClick={() => setModal({ type: 'personal_detail', isOpen: true, category: cat })} className="p-2 bg-indigo-50 text-indigo-500 rounded-xl active:bg-indigo-100"><Plus size={20} /></button>
                   </div>
@@ -640,7 +640,7 @@ const App: React.FC = () => {
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-stone-600 font-bold">₩{item.amount.toLocaleString()}</span>
+                            <span className="font-black text-stone-600 text-[13px]">₩{item.amount.toLocaleString()}</span>
                             <div className="flex items-center">
                                <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
                             </div>
