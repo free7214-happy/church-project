@@ -586,16 +586,16 @@ const App: React.FC = () => {
                   {data.expenseDetails[cat]?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-stone-50 space-y-2">
                       {data.expenseDetails[cat].map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
+                        <div key={idx} className="flex justify-between items-center group">
                           <span 
                             onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })}
-                            className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-amber-500 transition-colors"
+                            className="flex-1 flex items-center gap-1.5 text-[13px] text-stone-600 font-bold cursor-pointer hover:text-amber-500 transition-colors"
                           >
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-stone-600 font-black mr-2 text-[13px]">₩{item.amount.toLocaleString()}</span>
-                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
+                          <div className="flex items-center">
+                            <span className="w-24 text-right font-mono text-stone-600 font-black text-[13px]">₩{item.amount.toLocaleString()}</span>
+                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="ml-2 text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
                           </div>
                         </div>
                       ))}
@@ -631,19 +631,17 @@ const App: React.FC = () => {
                   {data.personalExpenseDetails[cat]?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-indigo-50 space-y-2">
                       {data.personalExpenseDetails[cat].map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
+                        <div key={idx} className="flex justify-between items-center group">
                           <span 
                             onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })}
-                            className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-indigo-500 transition-colors"
+                            className="flex-1 flex items-center gap-1.5 text-[13px] text-stone-600 font-bold cursor-pointer hover:text-indigo-500 transition-colors"
                           >
                             <span className="text-[11px] text-indigo-300 font-mono font-black">{item.date}</span>
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono text-stone-600 font-black text-[13px]">₩{item.amount.toLocaleString()}</span>
-                            <div className="flex items-center">
-                               <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
-                            </div>
+                          <div className="flex items-center">
+                            <span className="w-24 text-right font-mono text-stone-600 font-black text-[13px]">₩{item.amount.toLocaleString()}</span>
+                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="ml-2 text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
                           </div>
                         </div>
                       ))}
