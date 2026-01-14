@@ -5,8 +5,7 @@ import {
   ChevronRight, X, RotateCcw, CheckCircle2,
   User, Edit3, Landmark, Wallet, ArrowDownRight,
   AlertCircle, ArrowUpRight,
-  Users, TrendingUp, Info, Calendar, Download, Printer,
-  RefreshCw
+  Users, TrendingUp, Info, Calendar, Download, Printer
 } from 'lucide-react';
 import { TabType, OfferingData, ModalConfig, ExpenseDetail } from './types';
 import { DAYS, TIMES, DENOMINATIONS, INITIAL_EXPENSE_CATEGORIES, STORAGE_KEY } from './constants';
@@ -18,11 +17,8 @@ const App: React.FC = () => {
   const [selectedPersonalCat, setSelectedPersonalCat] = useState<string>('');
   const [bankAmountDisplay, setBankAmountDisplay] = useState('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'pending'>('saved');
-  
-  // Storage for Titles to persist
-  const [reportTitle, setReportTitle] = useState(() => localStorage.getItem('report_title_v1') || '연합성회 재정결산서 (보고)');
-  const [originalReportTitle, setOriginalReportTitle] = useState(() => localStorage.getItem('original_report_title_v1') || '연합성회 재정결산서');
+  const [reportTitle, setReportTitle] = useState('연합성회 재정결산서 (보고)');
+  const [originalReportTitle, setOriginalReportTitle] = useState('연합성회 재정결산서');
   
   const [data, setData] = useState<OfferingData>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -46,22 +42,9 @@ const App: React.FC = () => {
 
   const [modal, setModal] = useState<ModalConfig>({ type: 'counting', isOpen: false });
 
-  // Auto-save logic with debounce
   useEffect(() => {
-    setSaveStatus('pending');
-    const timer = setTimeout(() => {
-      setSaveStatus('saving');
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      localStorage.setItem('report_title_v1', reportTitle);
-      localStorage.setItem('original_report_title_v1', originalReportTitle);
-      
-      setTimeout(() => {
-        setSaveStatus('saved');
-      }, 800);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [data, reportTitle, originalReportTitle]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }, [data]);
 
   const isTimeValid = (day: string, time: string) => {
     if (day === '주일' && (time === '새벽' || time === '낮')) return false;
@@ -487,12 +470,7 @@ const App: React.FC = () => {
     <div className="flex flex-col min-h-screen max-w-md mx-auto bg-[#fffbf2] text-stone-700 relative">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-orange-100 p-5 flex justify-between items-center no-print shadow-sm">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-stone-800 uppercase flex items-center gap-2">
-            연합성회 재정관리
-            {saveStatus === 'pending' && <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" title="저장 대기 중" />}
-            {saveStatus === 'saving' && <RefreshCw size={10} className="animate-spin text-indigo-400" />}
-            {saveStatus === 'saved' && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="자동 저장됨" />}
-          </h1>
+          <h1 className="text-xl font-black tracking-tight text-stone-800 uppercase">연합성회 재정관리</h1>
           <p className="text-[11px] text-stone-400 font-bold uppercase tracking-wider">Church Finance Manager</p>
         </div>
         <div className="flex gap-2">
