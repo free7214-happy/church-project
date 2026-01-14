@@ -77,7 +77,6 @@ const App: React.FC = () => {
   const currentNetBalance = Number(totalAccumulatedOffering) - Number(totalExpenses);
   const settlingDifference = physicalCashTotal - currentNetBalance;
 
-  // 특정 세부 항목이 개인지출과 연동되어 있는지 확인하는 헬퍼
   const isLinkedToPersonal = (itemName: string) => {
     return Object.values(data.personalExpenseDetails).some(details => 
       details.some(d => d.name === itemName)
@@ -644,7 +643,7 @@ const App: React.FC = () => {
                             <span 
                               onClick={() => {
                                 if (linked) {
-                                  alert("이 항목은 개인지출과 연동되어 있습니다. 개인지출 탭에서 수정해주세요.");
+                                  setModal({ type: 'link_info', isOpen: true });
                                   return;
                                 }
                                 setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false });
@@ -660,7 +659,7 @@ const App: React.FC = () => {
                               <button 
                                 onClick={() => {
                                   if (linked) {
-                                    alert("이 항목은 개인지출과 연동되어 있습니다. 개인지출 탭에서 삭제해주세요.");
+                                    setModal({ type: 'link_info', isOpen: true });
                                     return;
                                   }
                                   setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false });
@@ -1001,6 +1000,25 @@ const App: React.FC = () => {
       {modal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
           <div className="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-w-[340px] mx-auto">
+            {modal.type === 'link_info' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <User size={32} />
+                </div>
+                <h3 className="text-xl font-black text-stone-800 mb-3 tracking-tight">연동 항목 안내</h3>
+                <p className="text-stone-500 text-[13px] font-bold leading-relaxed mb-8">
+                  이 내역은 <span className="text-indigo-500">개인지출</span>과 연결되어 있습니다.<br/>
+                  수정과 삭제는 개인지출 탭에서<br/>안전하게 관리할 수 있어요.
+                </p>
+                <button 
+                  onClick={() => setModal({ ...modal, isOpen: false })} 
+                  className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-all"
+                >
+                  확인했습니다
+                </button>
+              </div>
+            )}
+
             {modal.type === 'attendance' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
