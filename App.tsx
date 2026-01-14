@@ -272,29 +272,63 @@ const App: React.FC = () => {
     setData(prev => {
       const expKey = isPersonal ? 'personalExpenses' : 'expenses';
       const detKey = isPersonal ? 'personalExpenseDetails' : 'expenseDetails';
-      const details = [...(prev[detKey][cat] || [])];
-      details[index] = { ...details[index], name, amount: Math.max(0, amount) };
-      const newTotal = details.reduce((s, i) => s + i.amount, 0);
+      const oldDetails = prev[detKey][cat] || [];
+      const oldItem = oldDetails[index];
       
-      let nextData = { 
-        ...prev, 
-        [detKey]: { ...prev[detKey], [cat]: details }, 
-        [expKey]: { ...prev[expKey], [cat]: newTotal },
-        lastUpdated: new Date().toISOString()
-      };
+      const newDetails = [...oldDetails];
+      newDetails[index] = { ...newDetails[index], name, amount: Math.max(0, amount) };
+      const newPersonalTotal = newDetails.reduce((s, i) => s + i.amount, 0);
+      
+      // 깊은 복사 수행
+      let nextExpenseDetails = { ...prev.expenseDetails };
+      let nextExpenses = { ...prev.expenses };
+      let nextPersonalExpenseDetails = { ...prev.personalExpenseDetails, [cat]: newDetails };
+      let nextPersonalExpenses = { ...prev.personalExpenses, [cat]: newPersonalTotal };
 
-      if (isPersonal && syncWithChurchCat && prev.expenses[syncWithChurchCat] !== undefined) {
-        const dateStr = details[index].date || `${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
-        const churchDetails = [...(prev.expenseDetails[syncWithChurchCat] || []), { name, amount: Math.max(0, amount), date: dateStr }];
-        const churchTotal = churchDetails.reduce((s, i) => s + i.amount, 0);
-        nextData = { 
-          ...nextData, 
-          expenseDetails: { ...nextData.expenseDetails, [syncWithChurchCat]: churchDetails }, 
-          expenses: { ...nextData.expenses, [syncWithChurchCat]: churchTotal } 
-        };
+      if (isPersonal) {
+        // 1. 기존 연결 카테고리 탐색 (이름 기준)
+        let oldChurchCat = "";
+        Object.keys(prev.expenseDetails).forEach(c => {
+          if (prev.expenseDetails[c].some(d => d.name === oldItem.name)) {
+            oldChurchCat = c;
+          }
+        });
+
+        // 사용자가 명시적으로 카테고리를 선택하지 않았으면(빈 문자열) 기존 카테고리 유지
+        const targetChurchCat = syncWithChurchCat || oldChurchCat;
+
+        // 2. 카테고리가 변경되었거나 연결 해제된 경우 기존 위치에서 삭제
+        if (oldChurchCat && oldChurchCat !== targetChurchCat) {
+          const list = nextExpenseDetails[oldChurchCat].filter(d => d.name !== oldItem.name);
+          nextExpenseDetails[oldChurchCat] = list;
+          nextExpenses[oldChurchCat] = list.reduce((s, i) => s + i.amount, 0);
+        }
+
+        // 3. 새로운 또는 유지된 연결 카테고리가 있는 경우 업데이트 또는 추가
+        if (targetChurchCat && nextExpenses[targetChurchCat] !== undefined) {
+          const list = [...(nextExpenseDetails[targetChurchCat] || [])];
+          const existIdx = list.findIndex(d => d.name === oldItem.name);
+          
+          if (existIdx > -1) {
+            list[existIdx] = { ...list[existIdx], name, amount: Math.max(0, amount) };
+          } else {
+            const dateStr = newDetails[index].date || `${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
+            list.push({ name, amount: Math.max(0, amount), date: dateStr });
+          }
+          
+          nextExpenseDetails[targetChurchCat] = list;
+          nextExpenses[targetChurchCat] = list.reduce((s, i) => s + i.amount, 0);
+        }
       }
 
-      return nextData;
+      return { 
+        ...prev, 
+        expenses: nextExpenses,
+        expenseDetails: nextExpenseDetails,
+        personalExpenses: nextPersonalExpenses,
+        personalExpenseDetails: nextPersonalExpenseDetails,
+        lastUpdated: new Date().toISOString()
+      };
     });
     setModal({ ...modal, isOpen: false });
   };
@@ -304,14 +338,26 @@ const App: React.FC = () => {
       const expKey = isPersonal ? 'personalExpenses' : 'expenses';
       const detKey = isPersonal ? 'personalExpenseDetails' : 'expenseDetails';
       const details = [...(prev[detKey][cat] || [])];
+      const removedItem = details[index];
       details.splice(index, 1);
       const total = details.reduce((s, i) => s + i.amount, 0);
-      return { 
+      
+      let nextData = { 
         ...prev, 
         [detKey]: { ...prev[detKey], [cat]: details }, 
         [expKey]: { ...prev[expKey], [cat]: total },
         lastUpdated: new Date().toISOString()
       };
+
+      if (isPersonal) {
+        Object.keys(prev.expenseDetails).forEach(churchCat => {
+          const list = (nextData.expenseDetails[churchCat] || []).filter(d => d.name !== removedItem.name);
+          nextData.expenseDetails[churchCat] = list;
+          nextData.expenses[churchCat] = list.reduce((s, i) => s + i.amount, 0);
+        });
+      }
+
+      return nextData;
     });
     setModal({ ...modal, isOpen: false });
   };
@@ -1289,6 +1335,7 @@ const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPerson
     e.preventDefault();
     if (!name.trim() || !amountDisplay) return;
     const numericAmount = parseInt(amountDisplay.replace(/,/g, ''));
+    // syncCat이 빈 문자열이면 handleEditDetail에서 currentSyncCategory를 유지함
     onSave(name, numericAmount, syncCat);
   };
 
@@ -1298,13 +1345,14 @@ const EditDetailForm = ({ initialName, initialAmount, churchCategories, isPerson
       <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} placeholder="금액" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" required />
       {isPersonal && (
         <div className="space-y-2">
-          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결 (수정)</p>
+          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결 (변경 시 선택)</p>
           <div className="relative">
             <select value={syncCat} onChange={e => setSyncCat(e.target.value)} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none text-stone-500 appearance-none transition-colors focus:border-stone-200">
-              <option value="">{currentSyncCategory ? `현재 연결: ${currentSyncCategory}` : '현재 연결 없음'}</option>
+              <option value="">{currentSyncCategory ? `현재 연결 유지: ${currentSyncCategory}` : '현재 연결 없음'}</option>
               {churchCategories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
+              {currentSyncCategory && <option value="NONE_DISCONNECT">--- 연결 해제 ---</option>}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-stone-300">
               <ChevronRight size={16} className="rotate-90" />
