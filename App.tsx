@@ -306,7 +306,6 @@ const App: React.FC = () => {
       let nextPersonalExpenses = { ...prev.personalExpenses, [cat]: newPersonalTotal };
 
       if (isPersonal) {
-        // 정확한 항목 연동을 위해 이전 이름과 이전 금액이 정확히 일치하는 교회지출 항목을 찾음
         let oldChurchCat = "";
         let foundIdx = -1;
 
@@ -321,30 +320,22 @@ const App: React.FC = () => {
 
         const targetChurchCat = syncWithChurchCat === "NONE_DISCONNECT" ? "" : (syncWithChurchCat || oldChurchCat);
 
-        // 카테고리가 이동하는 경우 (기존 카테고리에서 삭제)
         if (oldChurchCat && oldChurchCat !== targetChurchCat) {
           const list = [...nextExpenseDetails[oldChurchCat]];
           list.splice(foundIdx, 1);
           nextExpenseDetails[oldChurchCat] = list;
           nextExpenses[oldChurchCat] = list.reduce((s, i) => s + i.amount, 0);
-          
-          // 초기화 (이동 시 타겟 카테고리에 새로 추가해야 하므로)
           foundIdx = -1; 
         }
 
-        // 타겟 카테고리 업데이트
         if (targetChurchCat && nextExpenses[targetChurchCat] !== undefined) {
           const list = [...(nextExpenseDetails[targetChurchCat] || [])];
-          
-          // 만약 같은 카테고리 내에서 수정하는 경우라면 기존 인덱스 사용
           if (foundIdx > -1 && oldChurchCat === targetChurchCat) {
             list[foundIdx] = { ...list[foundIdx], name, amount: Math.max(0, amount) };
           } else {
-            // 카테고리가 바뀌었거나 새로 연결하는 경우 리스트 끝에 추가
             const dateStr = newDetails[index].date || `${String(new Date().getMonth() + 1).padStart(2, '0')}.${String(new Date().getDate()).padStart(2, '0')}`;
             list.push({ name, amount: Math.max(0, amount), date: dateStr });
           }
-          
           nextExpenseDetails[targetChurchCat] = list;
           nextExpenses[targetChurchCat] = list.reduce((s, i) => s + i.amount, 0);
         }
@@ -380,7 +371,6 @@ const App: React.FC = () => {
 
       if (isPersonal) {
         Object.keys(prev.expenseDetails).forEach(churchCat => {
-          // 이름뿐 아니라 금액까지 확인하여 정확한 1개 레코드만 삭제하도록 함 (동일 순서 유지를 위해 인덱스 기반 splice)
           const list = [...(nextData.expenseDetails[churchCat] || [])];
           const matchIdx = list.findIndex(d => d.name === removedItem.name && d.amount === removedItem.amount);
           if (matchIdx > -1) {
@@ -1047,8 +1037,8 @@ const App: React.FC = () => {
       </nav>
 
       {modal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
-          <div className="bg-white w-full max-sm rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 max-w-[340px] mx-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-200 no-print">
+          <div className={`bg-white w-full rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 mx-auto ${['add_personal_category', 'rename'].includes(modal.type) ? 'max-w-[420px]' : 'max-w-[340px]'}`}>
             {modal.type === 'link_info' && (
               <div className="p-8 text-center">
                 <div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -1310,11 +1300,17 @@ const App: React.FC = () => {
             
             {modal.type === 'rename' && (
               <div className="p-6">
-                <h3 className="text-xl font-black text-stone-800 mb-4">이름 변경</h3>
-                <input id="renameInput" type="text" defaultValue={modal.oldName} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-stone-300" autoFocus />
-                <div className="flex gap-2">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">항목 이름 변경</h3>
+                    <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">Rename Item</p>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+                <input id="renameInput" type="text" defaultValue={modal.oldName} className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-6 outline-none focus:border-amber-400 transition-all text-stone-800" autoFocus />
+                <div className="flex gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleRenameCategory(modal.oldName!, (document.getElementById('renameInput') as HTMLInputElement).value, modal.isPersonal)} className="flex-1 py-4 bg-amber-400 text-white font-bold rounded-2xl active:bg-amber-500 shadow-lg shadow-amber-100">변경</button>
+                  <button onClick={() => handleRenameCategory(modal.oldName!, (document.getElementById('renameInput') as HTMLInputElement).value, modal.isPersonal)} className="flex-1 py-4 bg-amber-400 text-white font-bold rounded-2xl active:bg-amber-500 shadow-lg shadow-amber-100">변경 완료</button>
                 </div>
               </div>
             )}
@@ -1356,11 +1352,17 @@ const App: React.FC = () => {
 
             {modal.type === 'add_personal_category' && (
               <div className="p-6">
-                <h3 className="text-xl font-black text-stone-800 mb-4">새 개인 항목</h3>
-                <input id="newPersonalCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-indigo-400" placeholder="항목 이름" autoFocus />
-                <div className="flex gap-2">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">새 개인 지출 항목</h3>
+                    <p className="text-xs font-bold text-indigo-400 uppercase tracking-widest">New Personal Category</p>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+                <input id="newPersonalCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-6 outline-none focus:border-indigo-400 transition-all text-stone-800" placeholder="항목 이름을 입력하세요" autoFocus />
+                <div className="flex gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleAddCategory((document.getElementById('newPersonalCat') as HTMLInputElement).value, true)} className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-transform">추가</button>
+                  <button onClick={() => handleAddCategory((document.getElementById('newPersonalCat') as HTMLInputElement).value, true)} className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-transform">항목 추가</button>
                 </div>
               </div>
             )}
