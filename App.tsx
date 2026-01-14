@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [bankAmountDisplay, setBankAmountDisplay] = useState('');
   const [currentFileName, setCurrentFileName] = useState<string>('');
   const [reportTitle, setReportTitle] = useState('연합성회 재정결산서 (보고)');
+  const [originalReportTitle, setOriginalReportTitle] = useState('연합성회 재정결산서');
   
   const [data, setData] = useState<OfferingData>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -322,6 +323,8 @@ const App: React.FC = () => {
       reportExpenseNames: {}, report2Expenses: {}, report2Names: {}, lastUpdated: new Date().toISOString()
     });
     setCurrentFileName('');
+    setOriginalReportTitle('연합성회 재정결산서');
+    setReportTitle('연합성회 재정결산서 (보고)');
     setModal({ type: 'reset', isOpen: false });
   };
 
@@ -333,6 +336,7 @@ const App: React.FC = () => {
       lastUpdated: new Date().toISOString()
     }));
     setReportTitle('연합성회 재정결산서 (보고)');
+    setOriginalReportTitle('연합성회 재정결산서');
     setModal({ type: 'reset_report', isOpen: false });
   };
 
@@ -424,7 +428,7 @@ const App: React.FC = () => {
       input.parentNode?.replaceChild(span, input);
     });
 
-    const isEditableReport = id === 'report-editable';
+    const isEditableReport = id === 'report-editable' || id === 'report-original';
 
     doc.write(`
       <html>
@@ -661,7 +665,7 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
                 <div className="text-center mb-10">
-                  <h2 className="text-xl font-black text-stone-800">연합성회 재정결산서</h2>
+                  <input type="text" value={originalReportTitle} onChange={(e) => setOriginalReportTitle(e.target.value)} className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-orange-50/50 transition-colors p-1" />
                   <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
                 </div>
                 <div className="border-t-2 border-stone-800">
@@ -709,7 +713,7 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <button onClick={() => handlePrintTarget('report-original', '연합성회 재정결산서(원본)')} className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm">
+              <button onClick={() => handlePrintTarget('report-original', originalReportTitle)} className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm">
                 <Printer size={16} />
                 <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
               </button>
@@ -774,7 +778,7 @@ const App: React.FC = () => {
               </div>
               
               <div className="flex flex-col gap-3 no-print">
-                <button onClick={() => handlePrintTarget('report-editable', '연합성회 재정결산서(보고)')} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm">
+                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm">
                   <Printer size={16} />
                   <span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span>
                 </button>
