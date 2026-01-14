@@ -158,9 +158,25 @@ const App: React.FC = () => {
 
   const removeBankRecord = (index: number) => {
     setData(prev => {
+      const record = (prev.bankDeposits || [])[index];
       const newList = [...(prev.bankDeposits || [])];
       newList.splice(index, 1);
-      return { ...prev, bankDeposits: newList, lastUpdated: new Date().toISOString() };
+      
+      let nextData = { ...prev, bankDeposits: newList, lastUpdated: new Date().toISOString() };
+      
+      // 만약 출금 기록을 삭제하는 것이라면, 개인지출의 [통장출금완료] 항목도 함께 제거
+      if (record && record.type === 'withdraw') {
+        const personalCat = record.name;
+        if (nextData.personalExpenseDetails[personalCat]) {
+          const updatedDetails = nextData.personalExpenseDetails[personalCat].filter(d => d.name !== '[통장출금완료]');
+          nextData.personalExpenseDetails = {
+            ...nextData.personalExpenseDetails,
+            [personalCat]: updatedDetails
+          };
+        }
+      }
+      
+      return nextData;
     });
     setModal({ ...modal, isOpen: false });
   };
@@ -703,23 +719,39 @@ const App: React.FC = () => {
                   </div>
                   {data.personalExpenseDetails[cat]?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-indigo-50 space-y-2">
-                      {data.personalExpenseDetails[cat].map((item, idx) => (
-                        <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
-                          <span 
-                            onClick={() => setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })}
-                            className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-indigo-500 transition-colors"
-                          >
-                            <span className="text-[11px] text-indigo-300 font-mono font-black">{item.date}</span>
-                            <span className="text-stone-300 text-lg">•</span> {item.name}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-black text-stone-600 text-[13px]">₩{item.amount.toLocaleString()}</span>
-                            <div className="flex items-center">
-                               <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
+                      {data.personalExpenseDetails[cat].map((item, idx) => {
+                        const isBankWithdrawLink = item.name === '[통장출금완료]';
+                        return (
+                          <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
+                            <span 
+                              onClick={() => {
+                                if (isBankWithdrawLink) {
+                                  setModal({ type: 'bank_link_info', isOpen: true });
+                                  return;
+                                }
+                                setModal({ type: 'edit_personal_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true });
+                              }}
+                              className="flex-1 flex items-center gap-1.5 font-bold cursor-pointer hover:text-indigo-500 transition-colors"
+                            >
+                              <span className="text-[11px] text-indigo-300 font-mono font-black">{item.date}</span>
+                              <span className="text-stone-300 text-lg">•</span> {item.name}
+                              {isBankWithdrawLink && <Landmark size={12} className="text-rose-400 shrink-0" />}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-stone-600 text-[13px]">₩{item.amount.toLocaleString()}</span>
+                              <div className="flex items-center">
+                                 <button onClick={() => {
+                                   if (isBankWithdrawLink) {
+                                     setModal({ type: 'bank_link_info', isOpen: true });
+                                     return;
+                                   }
+                                   setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true });
+                                 }} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1013,6 +1045,25 @@ const App: React.FC = () => {
                 <button 
                   onClick={() => setModal({ ...modal, isOpen: false })} 
                   className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-all"
+                >
+                  확인했습니다
+                </button>
+              </div>
+            )}
+
+            {modal.type === 'bank_link_info' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Landmark size={32} />
+                </div>
+                <h3 className="text-xl font-black text-stone-800 mb-3 tracking-tight">통장 출금 연동 안내</h3>
+                <p className="text-stone-500 text-[13px] font-bold leading-relaxed mb-8">
+                  이 내역은 <span className="text-rose-500">통장 출금</span>과 연결되어 있습니다.<br/>
+                  수정이나 삭제는 <span className="text-stone-800">정산대조 탭</span>의<br/>통장 내역에서 관리할 수 있어요.
+                </p>
+                <button 
+                  onClick={() => setModal({ ...modal, isOpen: false })} 
+                  className="w-full py-4 bg-rose-500 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-all"
                 >
                   확인했습니다
                 </button>
