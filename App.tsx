@@ -594,7 +594,7 @@ const App: React.FC = () => {
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-stone-600 font-bold mr-2">₩{item.amount.toLocaleString()}</span>
+                            <span className="font-mono text-stone-600 font-bold mr-2 text-[13px]">₩{item.amount.toLocaleString()}</span>
                             <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
                           </div>
                         </div>
@@ -640,7 +640,7 @@ const App: React.FC = () => {
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-stone-600 font-bold">₩{item.amount.toLocaleString()}</span>
+                            <span className="font-mono text-stone-600 font-bold text-[13px]">₩{item.amount.toLocaleString()}</span>
                             <div className="flex items-center">
                                <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
                             </div>
