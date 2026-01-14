@@ -593,9 +593,10 @@ const App: React.FC = () => {
                           >
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
-                          <div className="flex items-center">
-                            <span className="w-24 text-right font-mono text-stone-600 font-black text-[13px]">₩{item.amount.toLocaleString()}</span>
-                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="ml-2 text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
+                          <div className="flex items-center justify-end min-w-[120px]">
+                            <span className="text-stone-300 font-black text-[11px] mr-1">₩</span>
+                            <span className="font-mono text-stone-600 font-black text-[14px]">{item.amount.toLocaleString()}</span>
+                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: false })} className="ml-3 text-stone-300 text-xl font-bold hover:text-rose-400 transition-colors p-1 leading-none active:scale-125">×</button>
                           </div>
                         </div>
                       ))}
@@ -639,9 +640,10 @@ const App: React.FC = () => {
                             <span className="text-[11px] text-indigo-300 font-mono font-black">{item.date}</span>
                             <span className="text-stone-300 text-lg">•</span> {item.name}
                           </span>
-                          <div className="flex items-center">
-                            <span className="w-24 text-right font-mono text-stone-600 font-black text-[13px]">₩{item.amount.toLocaleString()}</span>
-                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="ml-2 text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
+                          <div className="flex items-center justify-end min-w-[120px]">
+                            <span className="text-stone-300 font-black text-[11px] mr-1">₩</span>
+                            <span className="font-mono text-stone-600 font-black text-[14px]">{item.amount.toLocaleString()}</span>
+                            <button onClick={() => setModal({ type: 'delete_detail', isOpen: true, category: cat, detailIndex: idx, isPersonal: true })} className="ml-3 text-stone-300 hover:text-indigo-400 p-1 active:scale-125 transition-all text-xl font-bold leading-none">×</button>
                           </div>
                         </div>
                       ))}
