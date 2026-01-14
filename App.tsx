@@ -1249,8 +1249,8 @@ const DetailForm = ({ onAdd, isPersonal, churchCategories }: { onAdd: (name: str
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="항목 명칭 (예: 꽃꽂이, 간식비)" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" required />
-      <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} placeholder="금액 (예: 50,000)" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" required />
+      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="항목 명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200 transition-colors" required />
+      <input type="text" inputMode="numeric" value={amountDisplay} onChange={handleAmountChange} placeholder="금액" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-black outline-none focus:border-stone-200 transition-colors" required />
       {isPersonal && (
         <div className="space-y-2">
           <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">지출 항목 연결</p>
