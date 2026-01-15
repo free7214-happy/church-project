@@ -581,6 +581,48 @@ const App: React.FC = () => {
     );
   };
 
+  const renderPersonalTitle = (cat: string) => {
+    const accountMatch = cat.match(/[0-9-]{6,25}/);
+    if (!accountMatch) {
+      return (
+        <span 
+          onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} 
+          className="text-base font-black text-stone-700 cursor-pointer hover:text-indigo-600 transition-colors"
+        >
+          {cat}
+        </span>
+      );
+    }
+
+    const accountStr = accountMatch[0];
+    const parts = cat.split(accountStr);
+    const uniqueId = `title-${cat}`;
+
+    return (
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span 
+          onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} 
+          className="text-base font-black text-stone-700 cursor-pointer hover:text-indigo-600 transition-colors"
+        >
+          {parts[0]}
+        </span>
+        <span 
+          onClick={() => setModal({ type: 'copy_confirm', isOpen: true, copyText: accountStr, category: cat })}
+          className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg text-[12px] font-black cursor-pointer hover:bg-indigo-100 transition-all border border-indigo-100 flex items-center gap-1 shrink-0"
+        >
+          {copiedId === uniqueId ? <Check size={10} /> : <Copy size={10} />}
+          {accountStr}
+        </span>
+        <span 
+          onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} 
+          className="text-base font-black text-stone-700 cursor-pointer hover:text-indigo-600 transition-colors"
+        >
+          {parts[1]}
+        </span>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen max-w-md mx-auto bg-[#fffbf2] text-stone-700 relative">
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-orange-100 p-5 flex justify-between items-center no-print shadow-sm">
@@ -685,7 +727,7 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-2">
               {Object.entries(data.expenses).map(([cat, val]) => (
-                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm space-y-2">
+                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm flex flex-col gap-3">
                   <div className="flex justify-between items-center">
                     <span onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: false })} className="text-base font-black text-stone-700 cursor-pointer">{cat}</span>
                     <button onClick={() => setModal({ type: 'delete_category', isOpen: true, category: cat, isPersonal: false })} className="p-1 text-stone-200 active:text-rose-400 transition-colors"><Trash2 size={16} /></button>
@@ -695,7 +737,7 @@ const App: React.FC = () => {
                     <button onClick={() => setModal({ type: 'detail', isOpen: true, category: cat })} className="p-1 text-rose-400 active:text-rose-600 transition-colors"><Plus size={22} /></button>
                   </div>
                   {(data.expenseDetails[cat] as ExpenseDetail[])?.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-stone-50 space-y-2">
+                    <div className="mt-1 pt-3 border-t border-stone-50 space-y-2">
                       {(data.expenseDetails[cat] as ExpenseDetail[]).map((item, idx) => {
                         const linked = isLinkedToPersonal(item.name);
                         return (
@@ -728,9 +770,9 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-2">
               {Object.entries(data.personalExpenses || {}).map(([cat, val]) => (
-                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm space-y-2">
+                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm flex flex-col gap-3">
                   <div className="flex justify-between items-center">
-                    <span onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} className="text-base font-black text-stone-700 cursor-pointer">{cat}</span>
+                    {renderPersonalTitle(cat)}
                     <button onClick={() => setModal({ type: 'delete_personal_category', isOpen: true, category: cat })} className="p-1 text-stone-200 active:text-rose-400 transition-colors"><Trash2 size={16} /></button>
                   </div>
                   <div className="flex justify-between items-center">
@@ -738,7 +780,7 @@ const App: React.FC = () => {
                     <button onClick={() => setModal({ type: 'personal_detail', isOpen: true, category: cat })} className="p-1 text-indigo-500 active:text-indigo-700 transition-colors"><Plus size={22} /></button>
                   </div>
                   {(data.personalExpenseDetails[cat] as ExpenseDetail[])?.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-indigo-50 space-y-2">
+                    <div className="mt-1 pt-3 border-t border-indigo-50 space-y-2">
                       {(data.personalExpenseDetails[cat] as ExpenseDetail[]).map((item, idx) => (
                         <div key={idx} className="flex justify-between text-[13px] text-stone-600 items-center group">
                           <div className="flex-1 flex items-center gap-1.5 font-bold overflow-hidden">
@@ -935,7 +977,7 @@ const App: React.FC = () => {
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
-                  <button onClick={() => handleCopyText(modal.copyText!, `personal-${modal.category}-${modal.detailIndex}`)} className="py-4 bg-indigo-600 text-white font-bold rounded-2xl active:bg-indigo-700 shadow-lg shadow-indigo-100">복사하기</button>
+                  <button onClick={() => handleCopyText(modal.copyText!, `title-${modal.category}`)} className="py-4 bg-indigo-600 text-white font-bold rounded-2xl active:bg-indigo-700 shadow-lg shadow-indigo-100">복사하기</button>
                 </div>
               </div>
             )}
@@ -1022,7 +1064,7 @@ const App: React.FC = () => {
                 </div>
               </div>
             )}
-            {modal.type === 'delete_bank_record' && (<div className="p-8 text-center"><div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div><h3 className="text-xl font-black text-stone-800 mb-2">통장 내역 삭제</h3><p className="text-stone-500 text-sm mb-8">"{modal.category}" 통장 기록을 삭제하시겠습니까?</p><div className="grid grid-cols-2 gap-3"><button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={resetAllData} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button></div></div>)}
+            {modal.type === 'delete_bank_record' && (<div className="p-8 text-center"><div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div><h3 className="text-xl font-black text-stone-800 mb-2">통장 내역 삭제</h3><p className="text-stone-500 text-sm mb-8">"{modal.category}" 통장 기록을 삭제하시겠습니까?</p><div className="grid grid-cols-2 gap-3"><button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => removeBankRecord(modal.detailIndex!)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">삭제 확인</button></div></div>)}
             {modal.type === 'counting' && (<div className="p-6"><div className="flex justify-between items-center mb-6"><div><h3 className="text-xl font-black text-stone-800">{modal.day} {modal.time}</h3><p className="text-xs font-bold text-rose-400 uppercase tracking-widest">계수표 입력</p></div><button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button></div><div className="space-y-3">{DENOMINATIONS.map(denom => (<div key={denom} className="flex items-center justify-between"><span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span><div className="flex items-center gap-3"><input type="number" inputMode="numeric" value={data.counting[modal.day!]?.[modal.time!]?.[denom] || ''} onChange={(e) => handleUpdateCounting(modal.day!, modal.time!, denom, e.target.value)} className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400 transition-all" placeholder="0" /><span className="text-xs font-bold text-stone-300">매</span></div></div>))}<div className="mt-8 pt-6 border-t border-stone-100 flex justify-between items-center"><span className="text-sm font-bold text-stone-600">항목 합계</span><span className="text-2xl font-black text-rose-500">₩{getCountingTotal(modal.day!, modal.time!).toLocaleString()}</span></div><button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-rose-400 text-white font-black rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">입력 완료</button></div></div>)}
             {modal.type === 'edit_cash' && (<div className="p-6"><div className="flex justify-between items-center mb-6"><h3 className="text-xl font-black text-stone-800">수기 현금 계수</h3><button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button></div><div className="space-y-3">{DENOMINATIONS.map(denom => (<div key={denom} className="flex items-center justify-between"><span className="w-16 text-sm font-black text-stone-600">{denom.toLocaleString()}원</span><div className="flex items-center gap-3"><input type="number" inputMode="numeric" value={data.counting['__manual__']?.['__cash__']?.[denom] || ''} onChange={(e) => handleUpdateManualCash(denom, e.target.value)} className="w-24 px-4 py-3 rounded-2xl bg-stone-50 border border-stone-100 font-black text-stone-600 text-center text-lg outline-none focus:bg-white focus:border-rose-400" placeholder="0" /><span className="text-xs font-bold text-stone-300">매</span></div></div>))}<div className="mt-8 pt-6 border-t border-stone-100 flex justify-between items-center"><span className="text-sm font-bold text-stone-600">현금 총액</span><span className="text-2xl font-black text-rose-500">₩{manualCashTotal.toLocaleString()}</span></div><button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-stone-800 text-white font-black rounded-2xl active:scale-95 transition-transform">저장 완료</button></div></div>)}
             {modal.type === 'reset' && (<div className="p-8 text-center"><div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><RotateCcw size={32} /></div><h3 className="text-xl font-black text-stone-800 mb-2">전체 초기화</h3><p className="text-stone-500 text-sm mb-8">모든 재정 데이터가 삭제됩니다.<br/>이 작업은 되돌릴 수 없습니다.</p><div className="grid grid-cols-2 gap-3"><button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={resetAllData} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button></div></div>)}
