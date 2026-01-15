@@ -1001,8 +1001,8 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   {bankType === 'deposit' ? (
                     <div className="space-y-2">
-                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">입금 내역 명칭</p>
-                      <input id="bankName" type="text" placeholder="예: 이자수입, 주일헌금 등" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" autoFocus />
+                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
+                      <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" autoFocus />
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -1025,18 +1025,18 @@ const App: React.FC = () => {
                       </div>
                       {!selectedPersonalCat && (
                         <div className="space-y-2">
-                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">출금 내역 명칭</p>
-                          <input id="bankName" type="text" placeholder="예: 운영비 출금, 기타 지출" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" />
+                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
+                          <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" />
                         </div>
                       )}
                     </div>
                   )}
                   <div className="space-y-2">
-                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">금액 (원)</p>
+                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">금액</p>
                     <input 
                       type="text" 
                       inputMode="numeric" 
-                      placeholder="0" 
+                      placeholder="금액" 
                       value={bankAmountDisplay} 
                       onChange={(e) => { 
                         const val = e.target.value.replace(/[^0-9]/g, ''); 
