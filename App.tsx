@@ -173,13 +173,25 @@ const App: React.FC = () => {
       let nextData = { ...prev, bankDeposits: newList, lastUpdated: new Date().toISOString() };
       
       if (record && record.type === 'withdraw') {
-        const personalCat = record.name;
-        if (nextData.personalExpenseDetails[personalCat]) {
-          const updatedDetails = nextData.personalExpenseDetails[personalCat].filter(d => d.name !== '[통장출금완료]');
-          nextData.personalExpenseDetails = {
-            ...nextData.personalExpenseDetails,
-            [personalCat]: updatedDetails
-          };
+        const personalExpenseDetails = { ...prev.personalExpenseDetails };
+        let changed = false;
+
+        // 모든 개인지출 카테고리를 순회하며 해당 통장 기록과 연관된 [통장출금완료] 표시를 찾음
+        Object.keys(personalExpenseDetails).forEach(cat => {
+          const details = personalExpenseDetails[cat] || [];
+          // 1. 해당 카테고리 이름이 통장 기록 이름과 같거나 (변경 전)
+          // 2. 혹은 이름이 바뀌었더라도 해당 카테고리에 [통장출금완료]가 있고 날짜가 같으면 삭제 대상 후보
+          if (cat === record.name || details.some(d => d.name === '[통장출금완료]' && d.date === record.date)) {
+            const filtered = details.filter(d => d.name !== '[통장출금완료]');
+            if (filtered.length !== details.length) {
+              personalExpenseDetails[cat] = filtered;
+              changed = true;
+            }
+          }
+        });
+
+        if (changed) {
+          nextData.personalExpenseDetails = personalExpenseDetails;
         }
       }
       
