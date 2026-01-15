@@ -202,8 +202,11 @@ const App: React.FC = () => {
     setData(prev => {
       const expKey = isPersonal ? 'personalExpenses' : 'expenses';
       const detKey = isPersonal ? 'personalExpenseDetails' : 'expenseDetails';
+      
       const newExpenses = { ...prev[expKey] };
       const newDetails = { ...prev[detKey] };
+      const personalItemsToDelete = isPersonal ? (prev.personalExpenseDetails[cat] || []) : [];
+      
       delete newExpenses[cat];
       delete newDetails[cat];
       
@@ -212,7 +215,7 @@ const App: React.FC = () => {
       delete newReport2[cat];
       delete newReport2Names[cat];
 
-      return { 
+      let nextData = { 
         ...prev, 
         [expKey]: newExpenses, 
         [detKey]: newDetails, 
@@ -220,6 +223,32 @@ const App: React.FC = () => {
         report2Names: newReport2Names,
         lastUpdated: new Date().toISOString() 
       };
+
+      if (isPersonal && personalItemsToDelete.length > 0) {
+        const nextChurchExpenses = { ...prev.expenses };
+        const nextChurchDetails = { ...prev.expenseDetails };
+        
+        Object.keys(nextChurchDetails).forEach(churchCat => {
+          let list = [...(nextChurchDetails[churchCat] || [])];
+          let changed = false;
+          
+          personalItemsToDelete.forEach(pItem => {
+            const initialLen = list.length;
+            list = list.filter(d => !(d.name === pItem.name && d.amount === pItem.amount));
+            if (list.length !== initialLen) changed = true;
+          });
+          
+          if (changed) {
+            nextChurchDetails[churchCat] = list;
+            nextChurchExpenses[churchCat] = list.reduce((s, i) => s + i.amount, 0);
+          }
+        });
+        
+        nextData.expenses = nextChurchExpenses;
+        nextData.expenseDetails = nextChurchDetails;
+      }
+
+      return nextData;
     });
     setModal({ ...modal, isOpen: false });
   };
@@ -1001,7 +1030,7 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   {bankType === 'deposit' ? (
                     <div className="space-y-2">
-                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">입금 내역</p>
+                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
                       <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" autoFocus />
                     </div>
                   ) : (
@@ -1025,14 +1054,14 @@ const App: React.FC = () => {
                       </div>
                       {!selectedPersonalCat && (
                         <div className="space-y-2">
-                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">출금 내역</p>
+                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
                           <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" />
                         </div>
                       )}
                     </div>
                   )}
                   <div className="space-y-2">
-                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">금액 (원)</p>
+                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">금액</p>
                     <input 
                       type="text" 
                       inputMode="numeric" 
