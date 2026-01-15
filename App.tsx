@@ -1001,7 +1001,7 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   {bankType === 'deposit' ? (
                     <div className="space-y-2">
-                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
+                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">입금 내역</p>
                       <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" autoFocus />
                     </div>
                   ) : (
@@ -1025,14 +1025,14 @@ const App: React.FC = () => {
                       </div>
                       {!selectedPersonalCat && (
                         <div className="space-y-2">
-                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
+                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">출금 내역</p>
                           <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" />
                         </div>
                       )}
                     </div>
                   )}
                   <div className="space-y-2">
-                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">금액</p>
+                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">금액 (원)</p>
                     <input 
                       type="text" 
                       inputMode="numeric" 
