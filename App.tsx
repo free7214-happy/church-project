@@ -685,16 +685,14 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-2">
               {Object.entries(data.expenses).map(([cat, val]) => (
-                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
+                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm space-y-2">
                   <div className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                         <span onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: false })} className="text-base font-black text-stone-700">{cat}</span>
-                         <button onClick={() => setModal({ type: 'delete_category', isOpen: true, category: cat, isPersonal: false })} className="p-1 text-stone-200 active:text-rose-400"><Trash2 size={14} /></button>
-                      </div>
-                      <span className="text-lg font-black text-rose-400">₩{(val || 0).toLocaleString()}</span>
-                    </div>
-                    <button onClick={() => setModal({ type: 'detail', isOpen: true, category: cat })} className="p-2 bg-rose-50 text-rose-400 rounded-xl active:bg-rose-100"><Plus size={20} /></button>
+                    <span onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: false })} className="text-base font-black text-stone-700 cursor-pointer">{cat}</span>
+                    <button onClick={() => setModal({ type: 'delete_category', isOpen: true, category: cat, isPersonal: false })} className="p-1 text-stone-200 active:text-rose-400 transition-colors"><Trash2 size={16} /></button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-black text-rose-400">₩{(val || 0).toLocaleString()}</span>
+                    <button onClick={() => setModal({ type: 'detail', isOpen: true, category: cat })} className="p-1 text-rose-400 active:text-rose-600 transition-colors"><Plus size={22} /></button>
                   </div>
                   {(data.expenseDetails[cat] as ExpenseDetail[])?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-stone-50 space-y-2">
@@ -730,16 +728,14 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-2">
               {Object.entries(data.personalExpenses || {}).map(([cat, val]) => (
-                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
+                <div key={cat} className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm space-y-2">
                   <div className="flex justify-between items-center">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                         <span onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} className="text-base font-black text-stone-700">{cat}</span>
-                         <button onClick={() => setModal({ type: 'delete_personal_category', isOpen: true, category: cat })} className="p-1 text-stone-200 active:text-rose-400"><Trash2 size={14} /></button>
-                      </div>
-                      <span className="text-lg font-black text-indigo-500">₩{(val || 0).toLocaleString()}</span>
-                    </div>
-                    <button onClick={() => setModal({ type: 'personal_detail', isOpen: true, category: cat })} className="p-2 bg-indigo-50 text-indigo-500 rounded-xl active:bg-indigo-100"><Plus size={20} /></button>
+                    <span onClick={() => setModal({ type: 'rename', isOpen: true, oldName: cat, category: cat, isPersonal: true })} className="text-base font-black text-stone-700 cursor-pointer">{cat}</span>
+                    <button onClick={() => setModal({ type: 'delete_personal_category', isOpen: true, category: cat })} className="p-1 text-stone-200 active:text-rose-400 transition-colors"><Trash2 size={16} /></button>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-black text-indigo-500">₩{(val || 0).toLocaleString()}</span>
+                    <button onClick={() => setModal({ type: 'personal_detail', isOpen: true, category: cat })} className="p-1 text-indigo-500 active:text-indigo-700 transition-colors"><Plus size={22} /></button>
                   </div>
                   {(data.personalExpenseDetails[cat] as ExpenseDetail[])?.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-indigo-50 space-y-2">
