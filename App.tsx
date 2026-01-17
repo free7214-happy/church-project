@@ -176,11 +176,8 @@ const App: React.FC = () => {
         const personalExpenseDetails = { ...prev.personalExpenseDetails };
         let changed = false;
 
-        // 모든 개인지출 카테고리를 순회하며 해당 통장 기록과 연관된 [통장출금완료] 표시를 찾음
         Object.keys(personalExpenseDetails).forEach(cat => {
           const details = personalExpenseDetails[cat] || [];
-          // 1. 해당 카테고리 이름이 통장 기록 이름과 같거나 (변경 전)
-          // 2. 혹은 이름이 바뀌었더라도 해당 카테고리에 [통장출금완료]가 있고 날짜가 같으면 삭제 대상 후보
           if (cat === record.name || details.some(d => d.name === '[통장출금완료]' && d.date === record.date)) {
             const filtered = details.filter(d => d.name !== '[통장출금완료]');
             if (filtered.length !== details.length) {
@@ -518,23 +515,39 @@ const App: React.FC = () => {
   const handlePrintTarget = (id: string, title: string) => {
     const content = document.getElementById(id);
     if (!content) return;
+    
+    // Create hidden iframe for printing
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
-    iframe.style.right = '0'; iframe.style.bottom = '0';
-    iframe.style.width = '0'; iframe.style.height = '0';
+    iframe.style.right = '0'; 
+    iframe.style.bottom = '0';
+    iframe.style.width = '0'; 
+    iframe.style.height = '0';
     iframe.style.border = '0';
     document.body.appendChild(iframe);
+    
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
+
     const cloned = content.cloneNode(true) as HTMLElement;
+    
+    // Remove UI elements that shouldn't be in PDF
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+    
+    // Replace inputs with spans to maintain layout while preventing interactive elements in PDF
     cloned.querySelectorAll('input').forEach(input => {
       const span = document.createElement('span');
       span.textContent = (input as HTMLInputElement).value;
       span.className = input.className;
+      // Maintain exact styling of the input
+      span.style.display = 'inline-block';
+      span.style.width = '100%';
       input.parentNode?.replaceChild(span, input);
     });
+
     const isEditableReport = id === 'report-editable' || id === 'report-original';
+
+    // Tailwind base styles and fonts
     doc.write(`
       <html>
         <head>
@@ -542,24 +555,54 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { size: A4 portrait; margin: 0; }
-            html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body { font-family: 'Pretendard', sans-serif; display: flex; align-items: center; justify-content: center; }
-            .print-wrapper { width: 210mm; height: 297mm; display: flex; align-items: center; justify-content: center; padding: 10mm; box-sizing: border-box; }
-            .content-box { width: 100%; max-width: 190mm; max-height: 277mm; background: white; border: 1px solid #f3f4f6; border-radius: 24px; padding: 40px; box-sizing: border-box; box-shadow: none !important; overflow: hidden; }
+            @page { 
+              size: A4 portrait; 
+              margin: 10mm; 
+            }
+            * {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body { 
+              font-family: 'Pretendard', sans-serif; 
+              background: #fffbf2; 
+              padding: 0;
+              margin: 0;
+              display: flex;
+              justify-content: center;
+              align-items: flex-start;
+            }
+            .print-container {
+              width: 100%;
+              max-width: 800px;
+              margin: 0 auto;
+              background: white;
+              padding: 0;
+              border-radius: 24px;
+            }
+            /* Preserve exact card layout */
+            #report-original, #report-editable {
+              border: 1px solid #fed7aa; /* orange-100 fallback */
+              border-radius: 1.5rem; /* 24px */
+              box-shadow: none !important;
+              width: 100% !important;
+              max-width: none !important;
+            }
             table { width: 100%; border-collapse: collapse; }
             .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
             ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
-            h2 { font-size: 24px !important; margin-bottom: 8px !important; }
-            .no-print { display: none !important; }
           </style>
         </head>
         <body>
-          <div class="print-wrapper">
-            <div class="content-box">${cloned.innerHTML}</div>
+          <div class="print-container">
+            ${cloned.outerHTML}
           </div>
           <script>
-            window.onload = () => { window.focus(); window.print(); setTimeout(() => { window.frameElement.remove(); }, 500); };
+            window.onload = () => {
+              window.focus();
+              window.print();
+              setTimeout(() => { window.frameElement.remove(); }, 500);
+            };
           </script>
         </body>
       </html>
@@ -898,7 +941,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <button onClick={() => handlePrintTarget('report-original', originalReportTitle)} className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm">
-                <Printer size={16} />
+                <FileText size={16} />
                 <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
               </button>
             </div>
@@ -942,7 +985,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-3 no-print">
-                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"><Printer size={16} /><span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span></button>
+                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"><FileText size={16} /><span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span></button>
                 <button onClick={() => setModal({ type: 'reset_report', isOpen: true })} className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50"><RotateCcw size={13} className="text-rose-500" />항목 이름 및 금액 원본으로 초기화</button>
               </div>
             </div>
