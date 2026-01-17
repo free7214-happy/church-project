@@ -547,23 +547,31 @@ const App: React.FC = () => {
               background: white; 
               font-family: 'Pretendard', sans-serif;
               display: flex; align-items: center; justify-content: center;
-              overflow: hidden;
+              overflow: hidden; /* 강제로 2페이지 생성을 막음 */
             }
             .print-container {
               width: 210mm; height: 297mm;
               display: flex; align-items: center; justify-content: center;
               padding: 10mm;
               position: relative;
+              overflow: hidden;
             }
             .content-box { 
               width: 100%; max-width: 190mm; 
-              max-height: 277mm;
+              /* 실제 출력될 최대 높이 (A4 높이 297mm - 상하 여백) */
+              height: 277mm;
               background: white; border: 1px solid #f3f4f6; border-radius: 24px; 
               padding: 40px; 
               display: flex; flex-direction: column;
+              justify-content: center; /* 세로 중앙 정렬 */
+              align-items: center; /* 가로 중앙 정렬 */
               overflow: hidden;
               box-shadow: none !important;
+              page-break-after: avoid;
+              break-after: avoid;
             }
+            /* 내부 요소가 꽉 차도록 설정 */
+            .inner-report { width: 100%; }
             table { width: 100%; border-collapse: collapse; table-layout: fixed; }
             .report-row td { 
               padding: 10px 12px; font-size: 14px; color: #1c1917; 
@@ -571,23 +579,30 @@ const App: React.FC = () => {
               word-break: keep-all;
             }
             .report-row td:last-child { text-align: right !important; }
-            h2 { font-size: 24px !important; margin-bottom: 10px !important; }
+            h2 { font-size: 24px !important; margin-bottom: 10px !important; text-align: center; width: 100%; }
             .no-print { display: none !important; }
           </style>
         </head>
         <body>
           <div class="print-container">
-            <div class="content-box">${cloned.innerHTML}</div>
+            <div class="content-box">
+              <div class="inner-report">${cloned.innerHTML}</div>
+            </div>
           </div>
           <script>
             window.onload = () => { 
+              const inner = document.querySelector('.inner-report');
               const box = document.querySelector('.content-box');
-              const containerHeight = 277 * 3.78; // mm to px approx
-              if (box.scrollHeight > box.offsetHeight) {
-                const ratio = box.offsetHeight / box.scrollHeight;
-                box.style.transform = "scale(" + (ratio * 0.95) + ")";
-                box.style.transformOrigin = "top center";
+              // A4 가용 세로 높이 (mm -> px)
+              const maxPx = 277 * 3.78; 
+              
+              // 내부 콘텐츠가 박스보다 크면 자동으로 스케일 축소 (확실한 1페이지 안착)
+              if (inner.scrollHeight > maxPx) {
+                const ratio = maxPx / (inner.scrollHeight + 80); // 80은 여백 안전치
+                inner.style.transform = "scale(" + ratio + ")";
+                inner.style.transformOrigin = "top center";
               }
+              
               window.focus(); 
               window.print(); 
               setTimeout(() => { window.frameElement.remove(); }, 500); 
