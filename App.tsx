@@ -531,7 +531,7 @@ const App: React.FC = () => {
       span.className = input.className;
       input.parentNode?.replaceChild(span, input);
     });
-    
+    const isEditableReport = id === 'report-editable' || id === 'report-original';
     doc.write(`
       <html>
         <head>
@@ -539,81 +539,47 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { 
-              size: A4 portrait; 
-              margin: 0; 
-            }
+            @page { size: A4 portrait; margin: 0; }
             html, body { 
-              margin: 0; 
-              padding: 0; 
-              width: 100%; 
-              height: 100vh; 
-              background: white; 
-              -webkit-print-color-adjust: exact; 
-              print-color-adjust: exact; 
-              overflow: hidden;
+              margin: 0; padding: 0; height: 100%; width: 100%; background: white; 
+              -webkit-print-color-adjust: exact; print-color-adjust: exact; 
             }
             body { 
               font-family: 'Pretendard', sans-serif; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
-              background-color: white;
+              display: flex; align-items: flex-start; justify-content: center; 
+              overflow: hidden;
             }
             .print-wrapper { 
-              width: 210mm; 
-              height: 297mm; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
-              padding: 10mm; 
-              box-sizing: border-box; 
-              overflow: hidden; 
-              page-break-after: avoid;
-              page-break-before: avoid;
+              width: 210mm; height: 297mm; 
+              display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+              padding: 10mm; box-sizing: border-box; 
             }
             .content-box { 
-              width: 100%; 
-              max-width: 190mm; 
-              height: auto;
-              max-height: 277mm;
-              background: white; 
-              border: 1px solid #f3f4f6; 
-              border-radius: 20px; 
-              padding: 30px 40px; 
-              box-sizing: border-box; 
+              width: 100%; max-width: 190mm; 
+              height: auto; max-height: 277mm;
+              background: white; border: 1px solid #f3f4f6; border-radius: 24px; 
+              padding: 30px; box-sizing: border-box; 
               box-shadow: none !important; 
-              display: flex; 
-              flex-direction: column;
-              justify-content: center;
-              align-items: stretch;
-              text-align: center;
-              /* 항목이 많을 때 자동으로 줄어들도록 스케일 조정 */
-              transform: scale(0.92);
-              transform-origin: center;
+              display: flex; flex-direction: column;
+              overflow: hidden;
+              page-break-inside: avoid;
+              break-inside: avoid;
             }
-            table { width: 100%; border-collapse: collapse; margin: 0 auto; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
             .report-row td { 
-                padding: 6px 10px; 
-                font-size: 13px; 
-                color: #1c1917; 
-                line-height: 1.2;
-                border-bottom: 1px solid #f1f5f9;
+              padding: 8px 10px; font-size: 13px; color: #1c1917; 
+              border-bottom: 1px solid #f1f5f9;
+              word-break: keep-all;
             }
-            .report-row td:last-child { text-align: right !important; font-weight: 800; }
-            h2, input, span.text-xl { line-height: 1; margin: 0; }
+            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
+            h2 { font-size: 22px !important; margin-bottom: 6px !important; }
             .no-print { display: none !important; }
             
-            /* 수입/지출 영역 간격 축소 */
-            .border-b.border-stone-300 { padding-bottom: 10px; margin-bottom: 10px; }
+            /* 수량에 따른 자동 높이 조정 */
+            .flex-grow-container { flex-grow: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
             
-            @media print {
-              html, body { height: 100%; overflow: hidden; }
-              .content-box { border: none; transform: scale(0.88); margin: 0; }
-              .print-wrapper { padding: 0; height: 100vh; }
-              /* 2페이지 생성 방지 */
-              div + div { display: none !important; }
-            }
+            /* 강제로 1페이지 유지 */
+            body { max-height: 297mm; }
           </style>
         </head>
         <body>
@@ -622,6 +588,13 @@ const App: React.FC = () => {
           </div>
           <script>
             window.onload = () => { 
+              const box = document.querySelector('.content-box');
+              // 항목이 너무 많으면 폰트 사이즈를 동적으로 축소
+              if (box.scrollHeight > box.offsetHeight) {
+                const rows = document.querySelectorAll('.report-row td');
+                rows.forEach(r => r.style.fontSize = '11px');
+                rows.forEach(r => r.style.padding = '4px 10px');
+              }
               window.focus(); 
               window.print(); 
               setTimeout(() => { window.frameElement.remove(); }, 500); 
