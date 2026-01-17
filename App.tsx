@@ -176,11 +176,8 @@ const App: React.FC = () => {
         const personalExpenseDetails = { ...prev.personalExpenseDetails };
         let changed = false;
 
-        // 모든 개인지출 카테고리를 순회하며 해당 통장 기록과 연관된 [통장출금완료] 표시를 찾음
         Object.keys(personalExpenseDetails).forEach(cat => {
           const details = personalExpenseDetails[cat] || [];
-          // 1. 해당 카테고리 이름이 통장 기록 이름과 같거나 (변경 전)
-          // 2. 혹은 이름이 바뀌었더라도 해당 카테고리에 [통장출금완료]가 있고 날짜가 같으면 삭제 대상 후보
           if (cat === record.name || details.some(d => d.name === '[통장출금완료]' && d.date === record.date)) {
             const filtered = details.filter(d => d.name !== '[통장출금완료]');
             if (filtered.length !== details.length) {
@@ -535,6 +532,7 @@ const App: React.FC = () => {
       input.parentNode?.replaceChild(span, input);
     });
     const isEditableReport = id === 'report-editable' || id === 'report-original';
+
     doc.write(`
       <html>
         <head>
@@ -542,24 +540,90 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { size: A4 portrait; margin: 0; }
-            html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            body { font-family: 'Pretendard', sans-serif; display: flex; align-items: center; justify-content: center; }
-            .print-wrapper { width: 210mm; height: 297mm; display: flex; align-items: center; justify-content: center; padding: 10mm; box-sizing: border-box; }
-            .content-box { width: 100%; max-width: 190mm; max-height: 277mm; background: white; border: 1px solid #f3f4f6; border-radius: 24px; padding: 40px; box-sizing: border-box; box-shadow: none !important; overflow: hidden; }
-            table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            @page { 
+              size: A4 portrait; 
+              margin: 0 !important; 
+            }
+            html, body { 
+              margin: 0; padding: 0; 
+              width: 210mm; height: 297mm;
+              overflow: hidden; 
+              background: white; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
+            }
+            body { 
+              font-family: 'Pretendard', sans-serif; 
+              display: flex; 
+              align-items: flex-start; 
+              justify-content: center;
+              padding: 0;
+            }
+            .print-wrapper { 
+              width: 210mm; 
+              height: 297mm; 
+              display: flex; 
+              flex-direction: column;
+              align-items: center; 
+              justify-content: flex-start;
+              padding: 10mm; 
+              box-sizing: border-box; 
+              position: relative;
+              overflow: hidden;
+            }
+            .content-box { 
+              width: 100%; 
+              max-height: 277mm; 
+              background: white; 
+              border: 1px solid #f3f4f6; 
+              border-radius: 24px; 
+              padding: 30px; 
+              box-sizing: border-box; 
+              display: flex;
+              flex-direction: column;
+              transform-origin: top center;
+            }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            .report-row td { 
+              padding: 8px 10px; 
+              font-size: 13px; 
+              color: #1c1917; 
+              word-break: break-all;
+              border-bottom: 1px solid #f1f1f1;
+            }
             ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
-            h2 { font-size: 24px !important; margin-bottom: 8px !important; }
+            h2, .report-title { font-size: 22px !important; margin-bottom: 4px !important; font-weight: 800; }
             .no-print { display: none !important; }
+            
+            /* 내용이 많을 경우 1페이지에 맞추기 위한 자동 스케일링 */
+            #printable-content {
+               height: auto;
+               width: 100%;
+            }
           </style>
         </head>
         <body>
           <div class="print-wrapper">
-            <div class="content-box">${cloned.innerHTML}</div>
+            <div id="printable-content" class="content-box">${cloned.innerHTML}</div>
           </div>
           <script>
-            window.onload = () => { window.focus(); window.print(); setTimeout(() => { window.frameElement.remove(); }, 500); };
+            window.onload = () => {
+              const content = document.getElementById('printable-content');
+              const wrapperHeight = 277 * 3.78; // mm to px approx
+              const contentHeight = content.offsetHeight;
+              
+              // 내용이 1페이지 높이를 초과할 경우 비율 계산하여 축소
+              if (contentHeight > wrapperHeight) {
+                const scale = (wrapperHeight / contentHeight) * 0.98;
+                content.style.transform = "scale(" + scale + ")";
+              }
+              
+              setTimeout(() => {
+                window.focus(); 
+                window.print(); 
+                setTimeout(() => { window.frameElement.remove(); }, 500);
+              }, 300);
+            };
           </script>
         </body>
       </html>
