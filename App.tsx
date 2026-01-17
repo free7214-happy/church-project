@@ -515,33 +515,23 @@ const App: React.FC = () => {
   const handlePrintTarget = (id: string, title: string) => {
     const content = document.getElementById(id);
     if (!content) return;
-    
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
-    iframe.style.right = '0'; 
-    iframe.style.bottom = '0';
-    iframe.style.width = '0'; 
-    iframe.style.height = '0';
+    iframe.style.right = '0'; iframe.style.bottom = '0';
+    iframe.style.width = '0'; iframe.style.height = '0';
     iframe.style.border = '0';
     document.body.appendChild(iframe);
-    
     const doc = iframe.contentWindow?.document;
     if (!doc) return;
-
     const cloned = content.cloneNode(true) as HTMLElement;
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
-    
     cloned.querySelectorAll('input').forEach(input => {
       const span = document.createElement('span');
       span.textContent = (input as HTMLInputElement).value;
       span.className = input.className;
-      span.style.display = 'inline-block';
-      span.style.width = '100%';
       input.parentNode?.replaceChild(span, input);
     });
-
-    const isEditableReport = id === 'report-editable';
-
+    const isEditableReport = id === 'report-editable' || id === 'report-original';
     doc.write(`
       <html>
         <head>
@@ -549,100 +539,37 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { 
-              size: A4 portrait; 
-              margin: 0; 
-            }
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            html, body {
-              margin: 0;
-              padding: 0;
-              height: 100%;
-              width: 100%;
-              background: #fffbf2;
+            @page { size: A4 portrait; margin: 0; }
+            html, body { 
+              margin: 0; padding: 0; height: 100%; width: 100%; background: white; 
+              -webkit-print-color-adjust: exact; print-color-adjust: exact; 
               overflow: hidden;
             }
-            body { 
-              font-family: 'Pretendard', sans-serif; 
-              display: flex;
-              justify-content: center;
-              align-items: center;
+            body { font-family: 'Pretendard', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
+            .print-wrapper { width: 210mm; min-height: 297mm; max-height: 297mm; display: flex; align-items: flex-start; justify-content: center; padding: 5mm; box-sizing: border-box; overflow: hidden; page-break-after: avoid; }
+            .content-box { 
+              width: 100%; max-width: 190mm; max-height: 287mm; background: white; border: 1px solid #f3f4f6; border-radius: 20px; 
+              padding: 25px 35px; box-sizing: border-box; box-shadow: none !important; overflow: hidden;
+              display: flex; flex-direction: column;
             }
-            .a4-page {
-              width: 210mm;
-              height: 297mm;
-              padding: 10mm;
-              box-sizing: border-box;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              background: #fffbf2;
-              overflow: hidden;
+            table { width: 100%; border-collapse: collapse; }
+            .report-row td { padding: 8px 10px; font-size: 13px; color: #1c1917; line-height: 1.2; }
+            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
+            h2 { font-size: 20px !important; margin-bottom: 4px !important; }
+            .no-print { display: none !important; }
+            /* Force single page */
+            @media print {
+              .content-box { border: none; padding: 15px 25px; }
+              .print-wrapper { padding: 0; }
             }
-            .content-wrapper {
-              width: 100%;
-              max-height: 277mm;
-              background: white;
-              border: 1px solid #fed7aa;
-              border-radius: 20px;
-              padding: 8mm;
-              box-sizing: border-box;
-              overflow: hidden;
-              display: flex;
-              flex-direction: column;
-            }
-            .header-area { margin-bottom: 5mm; text-align: center; }
-            .header-title { font-size: 1.25rem; font-weight: 800; color: #1c1917; margin-bottom: 2px; }
-            .header-sub { font-size: 10px; font-weight: 700; color: #a8a29e; letter-spacing: 0.1em; text-transform: uppercase; }
-            
-            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-            .report-row td { 
-              padding: ${isEditableReport ? '6px 4px' : '8px 6px'}; 
-              font-size: ${isEditableReport ? '13px' : '14px'}; 
-              color: #1c1917; 
-              border-bottom: 1px solid #f5f5f4;
-            }
-            .report-row td:first-child { font-weight: 800; }
-            .report-row td:last-child { text-align: right; }
-            
-            .summary-box { 
-              margin-top: auto; 
-              border-top: 2px solid #1c1917; 
-              background: #fafaf9;
-            }
-            .footer-total {
-              background: ${isEditableReport ? '#312e81' : '#1c1917'};
-              color: white;
-              padding: 12px 16px;
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-bottom-left-radius: 12px;
-              border-bottom-right-radius: 12px;
-            }
-            .footer-total span:last-child { font-size: 1.5rem; font-weight: 800; }
           </style>
         </head>
         <body>
-          <div class="a4-page">
-            <div class="content-wrapper">
-              <div class="header-area">
-                <div class="header-title">${title}</div>
-                <div class="header-sub">Financial Settlement Report</div>
-              </div>
-              ${cloned.innerHTML}
-            </div>
+          <div class="print-wrapper">
+            <div class="content-box">${cloned.innerHTML}</div>
           </div>
           <script>
-            window.onload = () => {
-              window.focus();
-              window.print();
-              setTimeout(() => { window.frameElement.remove(); }, 500);
-            };
+            window.onload = () => { window.focus(); window.print(); setTimeout(() => { window.frameElement.remove(); }, 500); };
           </script>
         </body>
       </html>
@@ -930,110 +857,102 @@ const App: React.FC = () => {
         {activeTab === TabType.REPORT && (
           <div className="space-y-8 pb-10">
             <div className="space-y-4">
-              <div id="report-original" className="bg-white rounded-3xl shadow-sm text-[12px] min-w-[320px] overflow-hidden">
-                <div className="p-6 sm:p-10 no-print-wrapper">
-                  <div className="text-center mb-10 no-print-header">
-                    <input type="text" value={originalReportTitle} onChange={(e) => setOriginalReportTitle(e.target.value)} className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-orange-50/50 transition-colors p-1" />
-                    <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
-                  </div>
-                  <div className="border-t-2 border-stone-800">
-                    <div className="border-b border-stone-300">
-                      <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">수입 (Income)</div>
-                      <div className="p-6 flex flex-col justify-center items-center text-center">
-                        <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                        <span className="text-3xl font-black text-rose-500">{totalAccumulatedOffering.toLocaleString()}</span>
-                      </div>
+              <div id="report-original" className="bg-white p-6 sm:p-10 border border-orange-100 rounded-3xl shadow-sm text-[12px] min-w-[320px]">
+                <div className="text-center mb-10">
+                  <input type="text" value={originalReportTitle} onChange={(e) => setOriginalReportTitle(e.target.value)} className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-orange-50/50 transition-colors p-1" />
+                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
+                </div>
+                <div className="border-t-2 border-stone-800">
+                  <div className="border-b border-stone-300">
+                    <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">수입 (Income)</div>
+                    <div className="p-6 flex flex-col justify-center items-center text-center">
+                      <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
+                      <span className="text-3xl font-black text-rose-500">{totalAccumulatedOffering.toLocaleString()}</span>
                     </div>
-                    <div>
-                      <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">지출 (Expense)</div>
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="bg-stone-50/50">
-                            <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-2/3 text-[14px]">항목</th>
-                            <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
+                  </div>
+                  <div>
+                    <div className="bg-stone-50 p-2 border-b border-stone-300 text-center font-black text-stone-800 uppercase">지출 (Expense)</div>
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="bg-stone-50/50">
+                          <th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 w-2/3 text-[14px]">항목</th>
+                          <th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {getReportExpenses().map((item, i) => (
+                          <tr key={i} className="border-b border-stone-100 last:border-b-0 report-row">
+                            <td className="p-3 font-black text-stone-800 text-[15px]">{item.cat}</td>
+                            <td className="p-3 text-right font-black text-stone-700 text-[15px]">{item.val.toLocaleString()}</td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {getReportExpenses().map((item, i) => (
-                            <tr key={i} className="border-b border-stone-100 last:border-b-0 report-row">
-                              <td className="p-3 font-black text-stone-800 text-[15px]">{item.cat}</td>
-                              <td className="p-3 text-right font-black text-stone-700 text-[15px]">{item.val.toLocaleString()}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="mt-0 border-t-2 border-stone-800">
+                  <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
+                    <div className="p-4 flex flex-col items-center">
+                      <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
+                      <span className="font-black text-rose-500 text-lg">{totalAccumulatedOffering.toLocaleString()}</span>
+                    </div>
+                    <div className="p-4 flex flex-col items-center">
+                      <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
+                      <span className="font-black text-stone-800 text-lg">{totalExpenses.toLocaleString()}</span>
                     </div>
                   </div>
-                  <div className="mt-0 border-t-2 border-stone-800 summary-box">
-                    <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
-                      <div className="p-4 flex flex-col items-center">
-                        <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span>
-                        <span className="font-black text-rose-500 text-lg">{totalAccumulatedOffering.toLocaleString()}</span>
-                      </div>
-                      <div className="p-4 flex flex-col items-center">
-                        <span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span>
-                        <span className="font-black text-stone-800 text-lg">{totalExpenses.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="footer-total">
-                      <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
-                      <span className="font-black text-2xl">{currentNetBalance.toLocaleString()}</span>
-                    </div>
+                  <div className="bg-stone-800 text-white p-5 flex justify-between items-center rounded-b-xl">
+                    <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
+                    <span className="font-black text-2xl">{currentNetBalance.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
               <button onClick={() => handlePrintTarget('report-original', originalReportTitle)} className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm">
-                <FileText size={16} />
-                <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
+                <Printer size={16} />
+                <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 저장하기</span>
               </button>
             </div>
-            
             <div className="space-y-4">
-              <div id="report-editable" className="bg-white rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
-                <div className="p-6 sm:p-10 no-print-wrapper">
-                  <div className="text-center mb-10 no-print-header">
-                    <input type="text" value={reportTitle} onChange={(e) => setReportTitle(e.target.value)} className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1" />
-                    <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
-                  </div>
-                  <div className="border-t-2 border-stone-800">
-                    <div className="border-b border-stone-300">
-                      <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
-                      <div className="p-6 flex flex-col justify-center items-center text-center">
-                        <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
-                        <div className="text-3xl font-black text-indigo-600">{totalAccumulatedOffering.toLocaleString()}</div>
-                        <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
-                      <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 항목명과 금액을 자유롭게 수정하세요. (원본 보존)</div>
-                      <table className="w-full border-collapse">
-                        <thead><tr className="bg-stone-50/50"><th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 text-[14px]">항목</th><th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th></tr></thead>
-                        <tbody>
-                          {Object.keys(data.expenses).map((cat) => (
-                            <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
-                              <td className="p-0"><input type="text" value={data.report2Names[cat] !== undefined ? data.report2Names[cat] : cat} onChange={(e) => handleLocalReportNameEdit(cat, e.target.value)} className="w-full bg-transparent text-left font-black text-stone-800 text-[14px] outline-none px-3 py-3 border-none transition-colors focus:bg-indigo-50/50 focus:text-indigo-900" placeholder="항목명 입력" /></td>
-                              <td className="p-0"><input type="text" inputMode="numeric" value={(data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0)).toLocaleString()} onChange={(e) => handleLocalReportEdit(cat, e.target.value)} className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600" onFocus={(e) => e.target.select()} /></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+              <div id="report-editable" className="bg-white p-6 sm:p-10 border border-indigo-100 rounded-3xl shadow-sm text-[12px] relative overflow-hidden">
+                <div className="text-center mb-10">
+                  <input type="text" value={reportTitle} onChange={(e) => setReportTitle(e.target.value)} className="w-full bg-transparent text-center text-xl font-black text-stone-800 outline-none border-none focus:bg-indigo-50/50 transition-colors p-1" />
+                  <p className="text-stone-400 font-bold mt-1 uppercase tracking-widest text-[10px]">Financial Settlement Report</p>
+                </div>
+                <div className="border-t-2 border-stone-800">
+                  <div className="border-b border-stone-300">
+                    <div className="bg-indigo-50 p-2 border-b border-stone-300 text-center font-black text-indigo-900 uppercase">수입 (Income)</div>
+                    <div className="p-6 flex flex-col justify-center items-center text-center">
+                      <span className="text-stone-400 font-bold mb-1">총 헌금 수입 합계</span>
+                      <div className="text-3xl font-black text-indigo-600">{totalAccumulatedOffering.toLocaleString()}</div>
+                      <p className="text-[10px] text-stone-300 mt-1 no-print">* 수입은 원본 데이터를 참조만 합니다.</p>
                     </div>
                   </div>
-                  <div className="mt-0 border-t-2 border-stone-800 summary-box">
-                    <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
-                      <div className="p-4 flex flex-col items-center"><span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span><span className="font-black text-indigo-600 text-lg">{totalAccumulatedOffering.toLocaleString()}</span></div>
-                      <div className="p-4 flex flex-col items-center"><span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span><span className="font-black text-stone-800 text-lg">{localReportTotalExpenses.toLocaleString()}</span></div>
-                    </div>
-                    <div className="footer-total">
-                      <span className="font-black text-base uppercase tracking-wider">최종 잔액</span>
-                      <span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span>
-                    </div>
+                  <div>
+                    <div className="bg-rose-50 p-2 border-b border-stone-300 text-center font-black text-rose-900 uppercase">지출 (Expense)</div>
+                    <div className="p-2 bg-amber-50/50 text-amber-600 text-[10px] text-center font-bold no-print">* 항목명과 금액을 자유롭게 수정하세요. (원본 보존)</div>
+                    <table className="w-full border-collapse">
+                      <thead><tr className="bg-stone-50/50"><th className="border-b border-stone-200 p-3 text-left font-black text-stone-600 text-[14px]">항목</th><th className="border-b border-stone-200 p-3 text-right font-black text-stone-600 text-[14px]">금액 (원)</th></tr></thead>
+                      <tbody>
+                        {Object.keys(data.expenses).map((cat) => (
+                          <tr key={cat} className="border-b border-stone-100 last:border-b-0 report-row">
+                            <td className="p-0"><input type="text" value={data.report2Names[cat] !== undefined ? data.report2Names[cat] : cat} onChange={(e) => handleLocalReportNameEdit(cat, e.target.value)} className="w-full bg-transparent text-left font-black text-stone-800 text-[14px] outline-none px-3 py-3 border-none transition-colors focus:bg-indigo-50/50 focus:text-indigo-900" placeholder="항목명 입력" /></td>
+                            <td className="p-0"><input type="text" inputMode="numeric" value={(data.report2Expenses[cat] !== undefined ? data.report2Expenses[cat] : (data.expenses[cat] || 0)).toLocaleString()} onChange={(e) => handleLocalReportEdit(cat, e.target.value)} className="w-full bg-transparent text-right font-black text-stone-700 text-[15px] outline-none px-4 py-3 border-none transition-colors focus:bg-rose-50/50 focus:text-rose-600" onFocus={(e) => e.target.select()} /></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
+                </div>
+                <div className="mt-0 border-t-2 border-stone-800">
+                  <div className="grid grid-cols-2 divide-x divide-stone-300 bg-stone-50">
+                    <div className="p-4 flex flex-col items-center"><span className="text-stone-400 font-bold text-[10px] uppercase mb-1">수입 총계</span><span className="font-black text-indigo-600 text-lg">{totalAccumulatedOffering.toLocaleString()}</span></div>
+                    <div className="p-4 flex flex-col items-center"><span className="text-stone-400 font-bold text-[10px] uppercase mb-1">지출 총계</span><span className="font-black text-stone-800 text-lg">{localReportTotalExpenses.toLocaleString()}</span></div>
+                  </div>
+                  <div className="bg-indigo-900 text-white p-5 flex justify-between items-center rounded-b-xl"><span className="font-black text-base uppercase tracking-wider">최종 잔액</span><span className="font-black text-2xl text-amber-300">{(totalAccumulatedOffering - localReportTotalExpenses).toLocaleString()}</span></div>
                 </div>
               </div>
               <div className="flex flex-col gap-3 no-print">
-                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"><FileText size={16} /><span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span></button>
+                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"><Printer size={16} /><span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 저장하기</span></button>
                 <button onClick={() => setModal({ type: 'reset_report', isOpen: true })} className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50"><RotateCcw size={13} className="text-rose-500" />항목 이름 및 금액 원본으로 초기화</button>
               </div>
             </div>
@@ -1133,7 +1052,7 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   {bankType === 'deposit' ? (
                     <div className="space-y-2">
-                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">입금 내역</p>
+                      <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
                       <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" autoFocus />
                     </div>
                   ) : (
@@ -1157,7 +1076,7 @@ const App: React.FC = () => {
                       </div>
                       {!selectedPersonalCat && (
                         <div className="space-y-2">
-                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">출금 내역</p>
+                          <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1">명칭</p>
                           <input id="bankName" type="text" placeholder="명칭" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold outline-none focus:border-stone-200" />
                         </div>
                       )}
