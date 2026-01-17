@@ -516,7 +516,6 @@ const App: React.FC = () => {
     const content = document.getElementById(id);
     if (!content) return;
     
-    // Create hidden iframe for printing
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0'; 
@@ -530,16 +529,12 @@ const App: React.FC = () => {
     if (!doc) return;
 
     const cloned = content.cloneNode(true) as HTMLElement;
-    
-    // Remove UI elements that shouldn't be in PDF
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
     
-    // Replace inputs with spans to maintain layout while preventing interactive elements in PDF
     cloned.querySelectorAll('input').forEach(input => {
       const span = document.createElement('span');
       span.textContent = (input as HTMLInputElement).value;
       span.className = input.className;
-      // Maintain exact styling of the input
       span.style.display = 'inline-block';
       span.style.width = '100%';
       input.parentNode?.replaceChild(span, input);
@@ -547,7 +542,6 @@ const App: React.FC = () => {
 
     const isEditableReport = id === 'report-editable' || id === 'report-original';
 
-    // Tailwind base styles and fonts
     doc.write(`
       <html>
         <head>
@@ -557,45 +551,53 @@ const App: React.FC = () => {
           <style>
             @page { 
               size: A4 portrait; 
-              margin: 10mm; 
+              margin: 0; 
             }
             * {
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
+            html, body {
+              margin: 0;
+              padding: 0;
+              height: 100%;
+              width: 100%;
+              background: #fffbf2;
+            }
             body { 
               font-family: 'Pretendard', sans-serif; 
-              background: #fffbf2; 
-              padding: 0;
-              margin: 0;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+            }
+            .a4-page {
+              width: 210mm;
+              height: 297mm;
+              padding: 15mm;
+              box-sizing: border-box;
               display: flex;
               justify-content: center;
               align-items: flex-start;
+              background: #fffbf2;
             }
-            .print-container {
+            .content-wrapper {
               width: 100%;
-              max-width: 800px;
-              margin: 0 auto;
               background: white;
-              padding: 0;
+              border: 1px solid #fed7aa;
               border-radius: 24px;
-            }
-            /* Preserve exact card layout */
-            #report-original, #report-editable {
-              border: 1px solid #fed7aa; /* orange-100 fallback */
-              border-radius: 1.5rem; /* 24px */
-              box-shadow: none !important;
-              width: 100% !important;
-              max-width: none !important;
+              padding: 10mm;
+              box-sizing: border-box;
             }
             table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            .report-row td { padding: 10px 8px; font-size: 14px; color: #1c1917; }
             ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
           </style>
         </head>
         <body>
-          <div class="print-container">
-            ${cloned.outerHTML}
+          <div class="a4-page">
+            <div class="content-wrapper">
+              ${cloned.innerHTML}
+            </div>
           </div>
           <script>
             window.onload = () => {
@@ -694,7 +696,7 @@ const App: React.FC = () => {
           onClick={() => setModal({ type: 'copy_confirm', isOpen: true, copyText: accountStr, category: cat })}
           className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-lg text-[12px] font-black cursor-pointer hover:bg-indigo-100 transition-all border border-indigo-100 flex items-center gap-1 shrink-0"
         >
-          {copiedId === uniqueId ? <Check size={10} /> : <Copy size={10} />}
+          {copiedId === uniqueId ? <Check size={10} /> : <Check size={10} />}
           {accountStr}
         </span>
         <span 
