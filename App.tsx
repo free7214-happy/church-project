@@ -525,6 +525,8 @@ const App: React.FC = () => {
     if (!doc) return;
     const cloned = content.cloneNode(true) as HTMLElement;
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
+    
+    // input 값을 span으로 치환하여 PDF 변환 시 레이아웃 깨짐 방지
     cloned.querySelectorAll('input').forEach(input => {
       const span = document.createElement('span');
       span.textContent = (input as HTMLInputElement).value;
@@ -539,7 +541,10 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { size: A4 portrait; margin: 0; }
+            @page { 
+              size: A4 portrait; 
+              margin: 0; 
+            }
             * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             html, body { 
               margin: 0; padding: 0; 
@@ -547,39 +552,41 @@ const App: React.FC = () => {
               background: white; 
               font-family: 'Pretendard', sans-serif;
               display: flex; align-items: center; justify-content: center;
-              overflow: hidden; /* 강제로 2페이지 생성을 막음 */
+              overflow: hidden;
             }
             .print-container {
               width: 210mm; height: 297mm;
-              display: flex; align-items: center; justify-content: center;
-              padding: 10mm;
-              position: relative;
+              display: grid;
+              place-items: center;
+              padding: 0;
+              margin: 0;
               overflow: hidden;
             }
             .content-box { 
-              width: 100%; max-width: 190mm; 
-              /* 실제 출력될 최대 높이 (A4 높이 297mm - 상하 여백) */
+              width: 190mm;
               height: 277mm;
-              background: white; border: 1px solid #f3f4f6; border-radius: 24px; 
-              padding: 40px; 
-              display: flex; flex-direction: column;
-              justify-content: center; /* 세로 중앙 정렬 */
-              align-items: center; /* 가로 중앙 정렬 */
+              background: white;
+              border: 1px solid #f3f4f6;
+              border-radius: 24px;
+              padding: 40px;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
               overflow: hidden;
-              box-shadow: none !important;
-              page-break-after: avoid;
-              break-after: avoid;
             }
-            /* 내부 요소가 꽉 차도록 설정 */
-            .inner-report { width: 100%; }
-            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            .inner-report {
+              width: 100%;
+              transform-origin: center center;
+            }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 20px; }
             .report-row td { 
               padding: 10px 12px; font-size: 14px; color: #1c1917; 
               border-bottom: 1px solid #f1f5f9;
               word-break: keep-all;
             }
             .report-row td:last-child { text-align: right !important; }
-            h2 { font-size: 24px !important; margin-bottom: 10px !important; text-align: center; width: 100%; }
+            h2 { font-size: 24px !important; margin-bottom: 30px !important; text-align: center; font-weight: 800; color: #1c1917; }
             .no-print { display: none !important; }
           </style>
         </head>
@@ -593,14 +600,12 @@ const App: React.FC = () => {
             window.onload = () => { 
               const inner = document.querySelector('.inner-report');
               const box = document.querySelector('.content-box');
-              // A4 가용 세로 높이 (mm -> px)
-              const maxPx = 277 * 3.78; 
+              // A4 가용 px 환산 (96dpi 기준 277mm는 약 1047px)
+              const maxH = box.offsetHeight - 80; // 패딩 여유분
               
-              // 내부 콘텐츠가 박스보다 크면 자동으로 스케일 축소 (확실한 1페이지 안착)
-              if (inner.scrollHeight > maxPx) {
-                const ratio = maxPx / (inner.scrollHeight + 80); // 80은 여백 안전치
-                inner.style.transform = "scale(" + ratio + ")";
-                inner.style.transformOrigin = "top center";
+              if (inner.scrollHeight > maxH) {
+                const ratio = maxH / inner.scrollHeight;
+                inner.style.transform = "scale(" + (ratio * 0.98) + ")";
               }
               
               window.focus(); 
