@@ -531,7 +531,7 @@ const App: React.FC = () => {
       span.className = input.className;
       input.parentNode?.replaceChild(span, input);
     });
-    const isEditableReport = id === 'report-editable' || id === 'report-original';
+
     doc.write(`
       <html>
         <head>
@@ -540,60 +540,53 @@ const App: React.FC = () => {
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
             @page { size: A4 portrait; margin: 0; }
+            * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             html, body { 
-              margin: 0; padding: 0; height: 100%; width: 100%; background: white; 
-              -webkit-print-color-adjust: exact; print-color-adjust: exact; 
-            }
-            body { 
-              font-family: 'Pretendard', sans-serif; 
-              display: flex; align-items: flex-start; justify-content: center; 
+              margin: 0; padding: 0; 
+              width: 210mm; height: 297mm; 
+              background: white; 
+              font-family: 'Pretendard', sans-serif;
+              display: flex; align-items: center; justify-content: center;
               overflow: hidden;
             }
-            .print-wrapper { 
-              width: 210mm; height: 297mm; 
-              display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
-              padding: 10mm; box-sizing: border-box; 
+            .print-container {
+              width: 210mm; height: 297mm;
+              display: flex; align-items: center; justify-content: center;
+              padding: 10mm;
+              position: relative;
             }
             .content-box { 
               width: 100%; max-width: 190mm; 
-              height: auto; max-height: 277mm;
+              max-height: 277mm;
               background: white; border: 1px solid #f3f4f6; border-radius: 24px; 
-              padding: 30px; box-sizing: border-box; 
-              box-shadow: none !important; 
+              padding: 40px; 
               display: flex; flex-direction: column;
               overflow: hidden;
-              page-break-inside: avoid;
-              break-inside: avoid;
+              box-shadow: none !important;
             }
             table { width: 100%; border-collapse: collapse; table-layout: fixed; }
             .report-row td { 
-              padding: 8px 10px; font-size: 13px; color: #1c1917; 
+              padding: 10px 12px; font-size: 14px; color: #1c1917; 
               border-bottom: 1px solid #f1f5f9;
               word-break: keep-all;
             }
-            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
-            h2 { font-size: 22px !important; margin-bottom: 6px !important; }
+            .report-row td:last-child { text-align: right !important; }
+            h2 { font-size: 24px !important; margin-bottom: 10px !important; }
             .no-print { display: none !important; }
-            
-            /* 수량에 따른 자동 높이 조정 */
-            .flex-grow-container { flex-grow: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; }
-            
-            /* 강제로 1페이지 유지 */
-            body { max-height: 297mm; }
           </style>
         </head>
         <body>
-          <div class="print-wrapper">
+          <div class="print-container">
             <div class="content-box">${cloned.innerHTML}</div>
           </div>
           <script>
             window.onload = () => { 
               const box = document.querySelector('.content-box');
-              // 항목이 너무 많으면 폰트 사이즈를 동적으로 축소
+              const containerHeight = 277 * 3.78; // mm to px approx
               if (box.scrollHeight > box.offsetHeight) {
-                const rows = document.querySelectorAll('.report-row td');
-                rows.forEach(r => r.style.fontSize = '11px');
-                rows.forEach(r => r.style.padding = '4px 10px');
+                const ratio = box.offsetHeight / box.scrollHeight;
+                box.style.transform = "scale(" + (ratio * 0.95) + ")";
+                box.style.transformOrigin = "top center";
               }
               window.focus(); 
               window.print(); 
