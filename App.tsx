@@ -531,7 +531,7 @@ const App: React.FC = () => {
       span.className = input.className;
       input.parentNode?.replaceChild(span, input);
     });
-    const isEditableReport = id === 'report-editable' || id === 'report-original';
+    
     doc.write(`
       <html>
         <head>
@@ -539,28 +539,65 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { size: A4 portrait; margin: 0; }
+            @page { 
+              size: A4 portrait; 
+              margin: 0; 
+            }
             html, body { 
-              margin: 0; padding: 0; height: 100%; width: 100%; background: white; 
-              -webkit-print-color-adjust: exact; print-color-adjust: exact; 
+              margin: 0; 
+              padding: 0; 
+              width: 100%; 
+              height: 100%; 
+              background: white; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact; 
               overflow: hidden;
             }
-            body { font-family: 'Pretendard', sans-serif; display: flex; align-items: flex-start; justify-content: center; }
-            .print-wrapper { width: 210mm; min-height: 297mm; max-height: 297mm; display: flex; align-items: flex-start; justify-content: center; padding: 5mm; box-sizing: border-box; overflow: hidden; page-break-after: avoid; }
-            .content-box { 
-              width: 100%; max-width: 190mm; max-height: 287mm; background: white; border: 1px solid #f3f4f6; border-radius: 20px; 
-              padding: 25px 35px; box-sizing: border-box; box-shadow: none !important; overflow: hidden;
-              display: flex; flex-direction: column;
+            body { 
+              font-family: 'Pretendard', sans-serif; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
             }
-            table { width: 100%; border-collapse: collapse; }
-            .report-row td { padding: 8px 10px; font-size: 13px; color: #1c1917; line-height: 1.2; }
-            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
-            h2 { font-size: 20px !important; margin-bottom: 4px !important; }
+            .print-wrapper { 
+              width: 210mm; 
+              height: 297mm; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              padding: 10mm; 
+              box-sizing: border-box; 
+              overflow: hidden; 
+              page-break-after: avoid;
+            }
+            .content-box { 
+              width: 100%; 
+              max-width: 190mm; 
+              background: white; 
+              border: 1px solid #f3f4f6; 
+              border-radius: 20px; 
+              padding: 40px; 
+              box-sizing: border-box; 
+              box-shadow: none !important; 
+              display: flex; 
+              flex-direction: column;
+              justify-content: center;
+              align-items: stretch;
+              text-align: center;
+              transform: scale(0.95);
+              transform-origin: center;
+            }
+            table { width: 100%; border-collapse: collapse; margin: 0 auto; }
+            .report-row td { padding: 10px 12px; font-size: 14px; color: #1c1917; line-height: 1.4; }
+            .report-row td:last-child { text-align: right !important; }
+            h2 { font-size: 24px !important; margin-bottom: 10px !important; }
             .no-print { display: none !important; }
-            /* Force single page */
+            
             @media print {
-              .content-box { border: none; padding: 15px 25px; }
-              .print-wrapper { padding: 0; }
+              .content-box { border: none; transform: scale(0.9); }
+              /* Force no extra pages */
+              * { -webkit-print-color-adjust: exact; }
+              body, .print-wrapper { page-break-inside: avoid; }
             }
           </style>
         </head>
@@ -569,7 +606,11 @@ const App: React.FC = () => {
             <div class="content-box">${cloned.innerHTML}</div>
           </div>
           <script>
-            window.onload = () => { window.focus(); window.print(); setTimeout(() => { window.frameElement.remove(); }, 500); };
+            window.onload = () => { 
+              window.focus(); 
+              window.print(); 
+              setTimeout(() => { window.frameElement.remove(); }, 500); 
+            };
           </script>
         </body>
       </html>
