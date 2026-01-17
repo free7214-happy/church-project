@@ -547,7 +547,7 @@ const App: React.FC = () => {
               margin: 0; 
               padding: 0; 
               width: 100%; 
-              height: 100%; 
+              height: 100vh; 
               background: white; 
               -webkit-print-color-adjust: exact; 
               print-color-adjust: exact; 
@@ -558,6 +558,7 @@ const App: React.FC = () => {
               display: flex; 
               align-items: center; 
               justify-content: center; 
+              background-color: white;
             }
             .print-wrapper { 
               width: 210mm; 
@@ -569,14 +570,17 @@ const App: React.FC = () => {
               box-sizing: border-box; 
               overflow: hidden; 
               page-break-after: avoid;
+              page-break-before: avoid;
             }
             .content-box { 
               width: 100%; 
               max-width: 190mm; 
+              height: auto;
+              max-height: 277mm;
               background: white; 
               border: 1px solid #f3f4f6; 
               border-radius: 20px; 
-              padding: 40px; 
+              padding: 30px 40px; 
               box-sizing: border-box; 
               box-shadow: none !important; 
               display: flex; 
@@ -584,20 +588,31 @@ const App: React.FC = () => {
               justify-content: center;
               align-items: stretch;
               text-align: center;
-              transform: scale(0.95);
+              /* 항목이 많을 때 자동으로 줄어들도록 스케일 조정 */
+              transform: scale(0.92);
               transform-origin: center;
             }
             table { width: 100%; border-collapse: collapse; margin: 0 auto; }
-            .report-row td { padding: 10px 12px; font-size: 14px; color: #1c1917; line-height: 1.4; }
-            .report-row td:last-child { text-align: right !important; }
-            h2 { font-size: 24px !important; margin-bottom: 10px !important; }
+            .report-row td { 
+                padding: 6px 10px; 
+                font-size: 13px; 
+                color: #1c1917; 
+                line-height: 1.2;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            .report-row td:last-child { text-align: right !important; font-weight: 800; }
+            h2, input, span.text-xl { line-height: 1; margin: 0; }
             .no-print { display: none !important; }
             
+            /* 수입/지출 영역 간격 축소 */
+            .border-b.border-stone-300 { padding-bottom: 10px; margin-bottom: 10px; }
+            
             @media print {
-              .content-box { border: none; transform: scale(0.9); }
-              /* Force no extra pages */
-              * { -webkit-print-color-adjust: exact; }
-              body, .print-wrapper { page-break-inside: avoid; }
+              html, body { height: 100%; overflow: hidden; }
+              .content-box { border: none; transform: scale(0.88); margin: 0; }
+              .print-wrapper { padding: 0; height: 100vh; }
+              /* 2페이지 생성 방지 */
+              div + div { display: none !important; }
             }
           </style>
         </head>
