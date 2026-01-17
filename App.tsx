@@ -176,8 +176,11 @@ const App: React.FC = () => {
         const personalExpenseDetails = { ...prev.personalExpenseDetails };
         let changed = false;
 
+        // 모든 개인지출 카테고리를 순회하며 해당 통장 기록과 연관된 [통장출금완료] 표시를 찾음
         Object.keys(personalExpenseDetails).forEach(cat => {
           const details = personalExpenseDetails[cat] || [];
+          // 1. 해당 카테고리 이름이 통장 기록 이름과 같거나 (변경 전)
+          // 2. 혹은 이름이 바뀌었더라도 해당 카테고리에 [통장출금완료]가 있고 날짜가 같으면 삭제 대상 후보
           if (cat === record.name || details.some(d => d.name === '[통장출금완료]' && d.date === record.date)) {
             const filtered = details.filter(d => d.name !== '[통장출금완료]');
             if (filtered.length !== details.length) {
@@ -525,15 +528,13 @@ const App: React.FC = () => {
     if (!doc) return;
     const cloned = content.cloneNode(true) as HTMLElement;
     cloned.querySelectorAll('.no-print').forEach(el => el.remove());
-    
-    // input 값을 span으로 치환하여 PDF 변환 시 레이아웃 깨짐 방지
     cloned.querySelectorAll('input').forEach(input => {
       const span = document.createElement('span');
       span.textContent = (input as HTMLInputElement).value;
       span.className = input.className;
       input.parentNode?.replaceChild(span, input);
     });
-
+    const isEditableReport = id === 'report-editable' || id === 'report-original';
     doc.write(`
       <html>
         <head>
@@ -541,77 +542,24 @@ const App: React.FC = () => {
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@400;600;800&display=swap" rel="stylesheet">
           <style>
-            @page { 
-              size: A4 portrait; 
-              margin: 0; 
-            }
-            * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            html, body { 
-              margin: 0; padding: 0; 
-              width: 210mm; height: 297mm; 
-              background: white; 
-              font-family: 'Pretendard', sans-serif;
-              display: flex; align-items: center; justify-content: center;
-              overflow: hidden;
-            }
-            .print-container {
-              width: 210mm; height: 297mm;
-              display: grid;
-              place-items: center;
-              padding: 0;
-              margin: 0;
-              overflow: hidden;
-            }
-            .content-box { 
-              width: 190mm;
-              height: 277mm;
-              background: white;
-              border: 1px solid #f3f4f6;
-              border-radius: 24px;
-              padding: 40px;
-              display: flex;
-              flex-direction: column;
-              justify-content: center;
-              align-items: center;
-              overflow: hidden;
-            }
-            .inner-report {
-              width: 100%;
-              transform-origin: center center;
-            }
-            table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 20px; }
-            .report-row td { 
-              padding: 10px 12px; font-size: 14px; color: #1c1917; 
-              border-bottom: 1px solid #f1f5f9;
-              word-break: keep-all;
-            }
-            .report-row td:last-child { text-align: right !important; }
-            h2 { font-size: 24px !important; margin-bottom: 30px !important; text-align: center; font-weight: 800; color: #1c1917; }
+            @page { size: A4 portrait; margin: 0; }
+            html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { font-family: 'Pretendard', sans-serif; display: flex; align-items: center; justify-content: center; }
+            .print-wrapper { width: 210mm; height: 297mm; display: flex; align-items: center; justify-content: center; padding: 10mm; box-sizing: border-box; }
+            .content-box { width: 100%; max-width: 190mm; max-height: 277mm; background: white; border: 1px solid #f3f4f6; border-radius: 24px; padding: 40px; box-sizing: border-box; box-shadow: none !important; overflow: hidden; }
+            table { width: 100%; border-collapse: collapse; }
+            .report-row td { padding: 12px 10px; font-size: 14px; color: #1c1917; }
+            ${isEditableReport ? '.report-row td:last-child { text-align: right !important; }' : ''}
+            h2 { font-size: 24px !important; margin-bottom: 8px !important; }
             .no-print { display: none !important; }
           </style>
         </head>
         <body>
-          <div class="print-container">
-            <div class="content-box">
-              <div class="inner-report">${cloned.innerHTML}</div>
-            </div>
+          <div class="print-wrapper">
+            <div class="content-box">${cloned.innerHTML}</div>
           </div>
           <script>
-            window.onload = () => { 
-              const inner = document.querySelector('.inner-report');
-              const box = document.querySelector('.content-box');
-              // A4 가용 px 환산 (96dpi 기준 277mm는 약 1047px)
-              const maxH = box.offsetHeight - 80; // 패딩 여유분
-              
-              if (inner.scrollHeight > maxH) {
-                const ratio = maxH / inner.scrollHeight;
-                inner.style.transform = "scale(" + (ratio * 0.98) + ")";
-              }
-              
-              window.focus(); 
-              window.print(); 
-              setTimeout(() => { window.frameElement.remove(); }, 500); 
-            };
+            window.onload = () => { window.focus(); window.print(); setTimeout(() => { window.frameElement.remove(); }, 500); };
           </script>
         </body>
       </html>
@@ -951,7 +899,7 @@ const App: React.FC = () => {
               </div>
               <button onClick={() => handlePrintTarget('report-original', originalReportTitle)} className="w-full py-3 bg-white border border-stone-200 text-stone-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-stone-50 transition-colors active:scale-95 no-print shadow-sm">
                 <Printer size={16} />
-                <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 저장하기</span>
+                <span className="text-xs uppercase tracking-tight">원본 결산서 PDF 내보내기</span>
               </button>
             </div>
             <div className="space-y-4">
@@ -994,7 +942,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-3 no-print">
-                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"><Printer size={16} /><span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 저장하기</span></button>
+                <button onClick={() => handlePrintTarget('report-editable', reportTitle)} className="w-full py-3 bg-white border border-stone-200 text-indigo-500 font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors active:scale-95 shadow-sm"><Printer size={16} /><span className="text-xs uppercase tracking-tight">보고용 결산서 PDF 내보내기</span></button>
                 <button onClick={() => setModal({ type: 'reset_report', isOpen: true })} className="w-full py-2.5 bg-rose-50/30 text-rose-500 border border-rose-100 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5 active:scale-95 transition-all active:bg-rose-50"><RotateCcw size={13} className="text-rose-500" />항목 이름 및 금액 원본으로 초기화</button>
               </div>
             </div>
