@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Calculator, Receipt, FileText, 
@@ -176,11 +177,8 @@ const App: React.FC = () => {
         const personalExpenseDetails = { ...prev.personalExpenseDetails };
         let changed = false;
 
-        // 모든 개인지출 카테고리를 순회하며 해당 통장 기록과 연관된 [통장출금완료] 표시를 찾음
         Object.keys(personalExpenseDetails).forEach(cat => {
           const details = personalExpenseDetails[cat] || [];
-          // 1. 해당 카테고리 이름이 통장 기록 이름과 같거나 (변경 전)
-          // 2. 혹은 이름이 바뀌었더라도 해당 카테고리에 [통장출금완료]가 있고 날짜가 같으면 삭제 대상 후보
           if (cat === record.name || details.some(d => d.name === '[통장출금완료]' && d.date === record.date)) {
             const filtered = details.filter(d => d.name !== '[통장출금완료]');
             if (filtered.length !== details.length) {
@@ -340,21 +338,19 @@ const App: React.FC = () => {
 
   const handleEditDetail = (cat: string, index: number, name: string, amount: number, isPersonal: boolean = false, syncWithChurchCat?: string) => {
     setData(prev => {
-      const expKey = isPersonal ? 'personalExpenses' : 'expenses';
-      const detKey = isPersonal ? 'personalExpenseDetails' : 'expenseDetails';
-      const oldDetails = prev[detKey][cat] || [];
-      const oldItem = oldDetails[index];
-      
-      const newDetails = [...oldDetails];
-      newDetails[index] = { ...newDetails[index], name, amount: Math.max(0, amount) };
-      const newPersonalTotal = newDetails.reduce((s, i) => s + i.amount, 0);
-      
-      let nextExpenseDetails = { ...prev.expenseDetails };
-      let nextExpenses = { ...prev.expenses };
-      let nextPersonalExpenseDetails = { ...prev.personalExpenseDetails, [cat]: newDetails };
-      let nextPersonalExpenses = { ...prev.personalExpenses, [cat]: newPersonalTotal };
-
       if (isPersonal) {
+        const oldDetails = prev.personalExpenseDetails[cat] || [];
+        const oldItem = oldDetails[index];
+        
+        const newDetails = [...oldDetails];
+        newDetails[index] = { ...newDetails[index], name, amount: Math.max(0, amount) };
+        const newPersonalTotal = newDetails.reduce((s, i) => s + i.amount, 0);
+        
+        let nextExpenseDetails = { ...prev.expenseDetails };
+        let nextExpenses = { ...prev.expenses };
+        let nextPersonalExpenseDetails = { ...prev.personalExpenseDetails, [cat]: newDetails };
+        let nextPersonalExpenses = { ...prev.personalExpenses, [cat]: newPersonalTotal };
+
         let oldChurchCat = "";
         let foundIdx = -1;
 
@@ -389,16 +385,29 @@ const App: React.FC = () => {
           nextExpenseDetails[targetChurchCat] = list;
           nextExpenses[targetChurchCat] = list.reduce((s, i) => s + i.amount, 0);
         }
-      }
 
-      return { 
-        ...prev, 
-        expenses: nextExpenses,
-        expenseDetails: nextExpenseDetails,
-        personalExpenses: nextPersonalExpenses,
-        personalExpenseDetails: nextPersonalExpenseDetails,
-        lastUpdated: new Date().toISOString()
-      };
+        return { 
+          ...prev, 
+          expenses: nextExpenses,
+          expenseDetails: nextExpenseDetails,
+          personalExpenses: nextPersonalExpenses,
+          personalExpenseDetails: nextPersonalExpenseDetails,
+          lastUpdated: new Date().toISOString()
+        };
+      } else {
+        // 지출관리(Church) 탭에서 수정할 때
+        const oldDetails = prev.expenseDetails[cat] || [];
+        const newDetails = [...oldDetails];
+        newDetails[index] = { ...newDetails[index], name, amount: Math.max(0, amount) };
+        const newTotal = newDetails.reduce((s, i) => s + i.amount, 0);
+
+        return {
+          ...prev,
+          expenseDetails: { ...prev.expenseDetails, [cat]: newDetails },
+          expenses: { ...prev.expenses, [cat]: newTotal },
+          lastUpdated: new Date().toISOString()
+        };
+      }
     });
     setModal({ ...modal, isOpen: false });
   };
