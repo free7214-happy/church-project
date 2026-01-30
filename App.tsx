@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Calculator, Receipt, FileText, 
@@ -7,7 +6,7 @@ import {
   User, Landmark, Wallet, ArrowDownRight,
   AlertCircle, ArrowUpRight,
   Users, TrendingUp, Info, Calendar, Download, Printer,
-  Copy, Check
+  Copy, Check, ArrowUp, ArrowDown, ListFilter
 } from 'lucide-react';
 import { TabType, OfferingData, ModalConfig, ExpenseDetail } from './types';
 import { DAYS, TIMES, DENOMINATIONS, INITIAL_EXPENSE_CATEGORIES, STORAGE_KEY } from './constants';
@@ -395,7 +394,6 @@ const App: React.FC = () => {
           lastUpdated: new Date().toISOString()
         };
       } else {
-        // 지출관리(Church) 탭에서 수정할 때
         const oldDetails = prev.expenseDetails[cat] || [];
         const newDetails = [...oldDetails];
         newDetails[index] = { ...newDetails[index], name, amount: Math.max(0, amount) };
@@ -443,6 +441,33 @@ const App: React.FC = () => {
       return nextData;
     });
     setModal({ ...modal, isOpen: false });
+  };
+
+  const handleReorderCategories = (startIndex: number, direction: 'up' | 'down') => {
+    const keys = Object.keys(data.expenses);
+    const newIndex = direction === 'up' ? startIndex - 1 : startIndex + 1;
+    
+    if (newIndex < 0 || newIndex >= keys.length) return;
+
+    const newKeys = [...keys];
+    [newKeys[startIndex], newKeys[newIndex]] = [newKeys[newIndex], newKeys[startIndex]];
+
+    setData(prev => {
+      const newExpenses: Record<string, number> = {};
+      const newExpenseDetails: Record<string, ExpenseDetail[]> = {};
+      
+      newKeys.forEach(key => {
+        newExpenses[key] = prev.expenses[key];
+        newExpenseDetails[key] = prev.expenseDetails[key] || [];
+      });
+
+      return {
+        ...prev,
+        expenses: newExpenses,
+        expenseDetails: newExpenseDetails,
+        lastUpdated: new Date().toISOString()
+      };
+    });
   };
 
   const resetAllData = () => {
@@ -807,7 +832,10 @@ const App: React.FC = () => {
                   )}
                 </div>
               ))}
-              <button onClick={() => setModal({ type: 'add_category', isOpen: true })} className="w-full p-6 border-2 border-dashed border-orange-100 rounded-3xl text-stone-400 font-bold text-sm mt-4 active:bg-orange-50 transition-colors shadow-sm bg-white/50">+ 항목 추가</button>
+              <div className="flex gap-2 mt-4">
+                <button onClick={() => setModal({ type: 'add_category', isOpen: true })} className="flex-1 p-6 border-2 border-dashed border-orange-100 rounded-3xl text-stone-400 font-bold text-sm active:bg-orange-50 transition-colors shadow-sm bg-white/50">+ 항목 추가</button>
+                <button onClick={() => setModal({ type: 'reorder_expenses', isOpen: true })} className="px-6 border-2 border-dashed border-orange-100 rounded-3xl text-stone-400 active:bg-orange-50 transition-colors shadow-sm bg-white/50 flex items-center justify-center"><ListFilter size={20} /></button>
+              </div>
             </div>
           </div>
         )}
@@ -1029,6 +1057,41 @@ const App: React.FC = () => {
                   <button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button>
                   <button onClick={() => handleCopyText(modal.copyText!, `title-${modal.category}`)} className="py-4 bg-indigo-600 text-white font-bold rounded-2xl active:bg-indigo-700 shadow-lg shadow-indigo-100">복사하기</button>
                 </div>
+              </div>
+            )}
+            {modal.type === 'reorder_expenses' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">항목 순서 변경</h3>
+                    <p className="text-xs font-bold text-rose-400 uppercase tracking-widest">지출관리 카테고리</p>
+                  </div>
+                  <button onClick={() => setModal({ ...modal, isOpen: false })} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                  {Object.keys(data.expenses).map((cat, idx, arr) => (
+                    <div key={cat} className="flex items-center justify-between p-4 bg-stone-50 rounded-2xl border border-stone-100">
+                      <span className="text-sm font-black text-stone-700 truncate mr-4">{cat}</span>
+                      <div className="flex gap-1 shrink-0">
+                        <button 
+                          disabled={idx === 0}
+                          onClick={() => handleReorderCategories(idx, 'up')}
+                          className={`p-2 rounded-lg transition-colors ${idx === 0 ? 'text-stone-200' : 'bg-white text-stone-400 active:bg-rose-50 active:text-rose-500 shadow-sm'}`}
+                        >
+                          <ArrowUp size={16} />
+                        </button>
+                        <button 
+                          disabled={idx === arr.length - 1}
+                          onClick={() => handleReorderCategories(idx, 'down')}
+                          className={`p-2 rounded-lg transition-colors ${idx === arr.length - 1 ? 'text-stone-200' : 'bg-white text-stone-400 active:bg-rose-50 active:text-rose-500 shadow-sm'}`}
+                        >
+                          <ArrowDown size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full mt-6 py-4 bg-stone-800 text-white font-black rounded-2xl shadow-lg active:scale-95 transition-transform">변경 완료</button>
               </div>
             )}
             {modal.type === 'link_info' && (<div className="p-8 text-center"><div className="w-16 h-16 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6"><User size={32} /></div><h3 className="text-xl font-black text-stone-800 mb-3 tracking-tight">연동 항목 안내</h3><p className="text-stone-500 text-[13px] font-bold leading-relaxed mb-8">이 내역은 <span className="text-indigo-500">개인지출</span>과 연결되어 있습니다.<br/>수정과 삭제는 개인지출 탭에서<br/>안전하게 관리할 수 있어요.</p><button onClick={() => setModal({ ...modal, isOpen: false })} className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-all">확인했습니다</button></div>)}
