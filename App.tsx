@@ -174,21 +174,15 @@ const App: React.FC = () => {
       
       if (record && record.type === 'withdraw') {
         const personalExpenseDetails = { ...prev.personalExpenseDetails };
-        let changed = false;
-
-        Object.keys(personalExpenseDetails).forEach(cat => {
-          const details = personalExpenseDetails[cat] || [];
-          if (cat === record.name || details.some(d => d.name === '[통장출금완료]' && d.date === record.date)) {
-            const filtered = details.filter(d => d.name !== '[통장출금완료]');
-            if (filtered.length !== details.length) {
-              personalExpenseDetails[cat] = filtered;
-              changed = true;
-            }
+        // 오직 해당 기록의 이름(카테고리명)과 일치하는 항목 내에서만 [통장출금완료] 삭제
+        const targetCat = record.name;
+        if (personalExpenseDetails[targetCat]) {
+          const details = personalExpenseDetails[targetCat] || [];
+          const filtered = details.filter(d => !(d.name === '[통장출금완료]' && d.date === record.date));
+          if (filtered.length !== details.length) {
+            personalExpenseDetails[targetCat] = filtered;
+            nextData.personalExpenseDetails = personalExpenseDetails;
           }
-        });
-
-        if (changed) {
-          nextData.personalExpenseDetails = personalExpenseDetails;
         }
       }
       
@@ -295,10 +289,16 @@ const App: React.FC = () => {
         }
       });
 
+      // 통장 내역 이름 동기화 (개인지출 출금 기록일 경우)
+      const newBankDeposits = (prev.bankDeposits || []).map(b => 
+        (isPersonal && b.type === 'withdraw' && b.name === oldName) ? { ...b, name: newName } : b
+      );
+
       return { 
         ...prev, 
         [expKey]: newExpenses, 
         [detKey]: newDetails, 
+        bankDeposits: newBankDeposits,
         report2Expenses: newReport2,
         lastUpdated: new Date().toISOString() 
       };
