@@ -22,6 +22,8 @@ const App: React.FC = () => {
   const [originalReportTitle, setOriginalReportTitle] = useState('연합성회 재정결산서');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
+  const DEFAULT_PERSONAL_CAT = '홍길동 농협 14102503481';
+
   const [data, setData] = useState<OfferingData>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
@@ -30,8 +32,8 @@ const App: React.FC = () => {
       attendance: {},
       expenses: INITIAL_EXPENSE_CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat]: 0 }), {}),
       expenseDetails: {},
-      personalExpenses: {},
-      personalExpenseDetails: {},
+      personalExpenses: { [DEFAULT_PERSONAL_CAT]: 0 },
+      personalExpenseDetails: { [DEFAULT_PERSONAL_CAT]: [] },
       bankDeposits: [],
       calcExpenses: [],
       manualCash: 0,
@@ -174,7 +176,6 @@ const App: React.FC = () => {
       
       if (record && record.type === 'withdraw') {
         const personalExpenseDetails = { ...prev.personalExpenseDetails };
-        // 오직 해당 기록의 이름(카테고리명)과 일치하는 항목 내에서만 [통장출금완료] 삭제
         const targetCat = record.name;
         if (personalExpenseDetails[targetCat]) {
           const details = personalExpenseDetails[targetCat] || [];
@@ -289,7 +290,6 @@ const App: React.FC = () => {
         }
       });
 
-      // 통장 내역 이름 동기화 (개인지출 출금 기록일 경우)
       const newBankDeposits = (prev.bankDeposits || []).map(b => 
         (isPersonal && b.type === 'withdraw' && b.name === oldName) ? { ...b, name: newName } : b
       );
@@ -472,9 +472,19 @@ const App: React.FC = () => {
 
   const resetAllData = () => {
     setData({
-      counting: {}, attendance: {}, expenses: INITIAL_EXPENSE_CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat]: 0 }), {}),
-      expenseDetails: {}, personalExpenses: {}, personalExpenseDetails: {}, bankDeposits: [], calcExpenses: [], manualCash: 0,
-      reportExpenseNames: {}, report2Expenses: {}, report2Names: {}, lastUpdated: new Date().toISOString()
+      counting: {}, 
+      attendance: {}, 
+      expenses: INITIAL_EXPENSE_CATEGORIES.reduce((acc, cat) => ({ ...acc, [cat]: 0 }), {}),
+      expenseDetails: {}, 
+      personalExpenses: { [DEFAULT_PERSONAL_CAT]: 0 },
+      personalExpenseDetails: { [DEFAULT_PERSONAL_CAT]: [] },
+      bankDeposits: [], 
+      calcExpenses: [], 
+      manualCash: 0,
+      reportExpenseNames: {}, 
+      report2Expenses: {}, 
+      report2Names: {}, 
+      lastUpdated: new Date().toISOString()
     });
     setCurrentFileName('');
     setOriginalReportTitle('연합성회 재정결산서');
