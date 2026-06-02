@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Calculator, Receipt, FileText, 
@@ -797,7 +796,7 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <h3 className={`text-base font-black shrink-0 ${item.day === '주일' ? 'text-rose-500' : 'text-stone-700'}`}>{item.day}</h3>
                     <button 
-                      onClick={() => handleDeleteOfferingItem(item.day)} 
+                      onClick={() => setModal({ type: 'delete_offering_item', isOpen: true, day: item.day })} 
                       className="text-stone-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 active:scale-110 transition-all flex items-center justify-center shrink-0"
                       title="항목 삭제"
                     >
@@ -848,7 +847,7 @@ const App: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <h3 className={`text-base font-black shrink-0 ${item.day === '주일' ? 'text-rose-500' : 'text-stone-700'}`}>{item.day}</h3>
                     <button 
-                      onClick={() => handleDeleteOfferingItem(item.day)} 
+                      onClick={() => setModal({ type: 'delete_offering_item', isOpen: true, day: item.day })} 
                       className="text-stone-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 active:scale-110 transition-all flex items-center justify-center shrink-0"
                       title="항목 삭제"
                     >
@@ -1281,6 +1280,34 @@ const App: React.FC = () => {
             {modal.type === 'add_category' && (<div className="p-6"><h3 className="text-xl font-black text-stone-800 mb-4">새 지출 항목</h3><input id="newCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-rose-400" placeholder="항목 이름" autoFocus /><div className="flex gap-2"><button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => handleAddCategory((document.getElementById('newCat') as HTMLInputElement).value, false)} className="flex-1 py-4 bg-rose-400 text-white font-bold rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">추가</button></div></div>)}
             {modal.type === 'add_personal_category' && (<div className="p-6"><h3 className="text-xl font-black text-stone-800 mb-4">새 개인 항목</h3><input id="newPersonalCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-indigo-400" placeholder="항목 이름" autoFocus /><div className="flex gap-2"><button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => handleAddCategory((document.getElementById('newPersonalCat') as HTMLInputElement).value, true)} className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-transform">추가</button></div></div>)}
             {modal.type === 'delete_personal_category' && (<div className="p-8 text-center"><div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div><h3 className="text-xl font-black text-stone-800 mb-2">개인 항목 삭제</h3><p className="text-stone-500 text-sm mb-8">"{modal.category}" 개인 항목을 삭제하시겠습니까?</p><div className="grid grid-cols-2 gap-3"><button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button></div></div>)}
+            {modal.type === 'delete_offering_item' && (
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Trash2 size={32} />
+                </div>
+                <h3 className="text-xl font-black text-stone-800 mb-2">항목 삭제</h3>
+                <p className="text-stone-500 text-sm mb-8">
+                  "{modal.day}" 항목과 해당 요일의 모든 데이터(계수 및 인원)가 삭제됩니다.<br />정말 삭제하시겠습니까?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    onClick={() => setModal({ ...modal, isOpen: false })} 
+                    className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200"
+                  >
+                    취소
+                  </button>
+                  <button 
+                    onClick={() => {
+                      handleDeleteOfferingItem(modal.day!);
+                      setModal({ ...modal, isOpen: false });
+                    }} 
+                    className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600 shadow-lg shadow-rose-100"
+                  >
+                    삭제 확인
+                  </button>
+                </div>
+              </div>
+            )}
             {modal.type === 'add_offering_item' && (
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
