@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Calculator, Receipt, FileText, 
@@ -22,6 +23,10 @@ const App: React.FC = () => {
   const [originalReportTitle, setOriginalReportTitle] = useState('연합성회 재정결산서');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
+  // Custom offering item temporary inputs
+  const [newOfferingDay, setNewOfferingDay] = useState('');
+  const [newOfferingTimes, setNewOfferingTimes] = useState<string[]>([]);
+  
   const DEFAULT_PERSONAL_CAT = '홍길동 농협 14102503481';
 
   const [data, setData] = useState<OfferingData>(() => {
@@ -40,7 +45,8 @@ const App: React.FC = () => {
       reportExpenseNames: {},
       report2Expenses: {},
       report2Names: {},
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      offeringSettings: [] // Empty by default! Show Add Item menu only by default.
     };
   });
 
@@ -51,8 +57,9 @@ const App: React.FC = () => {
   }, [data]);
 
   const isTimeValid = (day: string, time: string) => {
-    if (day === '주일' && (time === '새벽' || time === '낮')) return false;
-    return true;
+    const setting = (data.offeringSettings || []).find(s => s.day === day);
+    if (!setting) return false;
+    return setting.times.includes(time);
   };
 
   const getCountingTotal = (day: string, time: string) => {
@@ -61,17 +68,60 @@ const App: React.FC = () => {
     return Object.entries(entry).reduce((sum, [denom, qty]) => sum + (Number(denom) * (qty as number)), 0);
   };
 
-  const getDayTotalIncome = (day: string) => TIMES.reduce((sum, time) => sum + getCountingTotal(day, time), 0);
-  const getAttendanceTotal = (day: string, time: string) => Number(data.attendance[day]?.[time] || 0);
-  const getDayTotalAttendance = (day: string) => TIMES.reduce((sum, time) => sum + Number(getAttendanceTotal(day, time)), 0);
+  const getDayTotalIncome = (day: string) => {
+    const setting = (data.offeringSettings || []).find(s => s.day === day);
+    if (!setting) return 0;
+    return setting.times.reduce((sum, time) => sum + getCountingTotal(day, time), 0);
+  };
 
-  const totalAccumulatedOffering = DAYS.reduce((sum: number, day: string) => sum + Number(getDayTotalIncome(day)), 0);
-  
-  const totalAttendanceAll = DAYS.reduce((sum: number, day: string) => {
-    const dayAttendance = Object.values(data.attendance[day] || {}).reduce((acc: number, val: unknown) => acc + (Number(val) || 0), 0);
-    return sum + (dayAttendance as number);
+  const getAttendanceTotal = (day: string, time: string) => Number(data.attendance[day]?.[time] || 0);
+
+  const getDayTotalAttendance = (day: string) => {
+    const setting = (data.offeringSettings || []).find(s => s.day === day);
+    if (!setting) return 0;
+    return setting.times.reduce((sum, time) => sum + Number(getAttendanceTotal(day, time)), 0);
+  };
+
+  const totalAccumulatedOffering = (data.offeringSettings || []).reduce((sum: number, setting) => {
+    const dayTotal = setting.times.reduce((timeSum, time) => timeSum + getCountingTotal(setting.day, time), 0);
+    return sum + dayTotal;
   }, 0);
   
+  const totalAttendanceAll = (data.offeringSettings || []).reduce((sum: number, setting) => {
+    const dayAttendance = setting.times.reduce((acc, time) => acc + Number(data.attendance[setting.day]?.[time] || 0), 0);
+    return sum + dayAttendance;
+  }, 0);
+
+  const handleDeleteOfferingItem = (day: string) => {
+    setData(prev => {
+      const nextSettings = (prev.offeringSettings || []).filter(item => item.day !== day);
+      return {
+        ...prev,
+        offeringSettings: nextSettings,
+        lastUpdated: new Date().toISOString()
+      };
+    });
+  };
+
+  const handleDeleteOfferingTime = (day: string, time: string) => {
+    setData(prev => {
+      const nextSettings = (prev.offeringSettings || []).map(item => {
+        if (item.day === day) {
+          return {
+            ...item,
+            times: item.times.filter(t => t !== time)
+          };
+        }
+        return item;
+      }).filter(item => item.times.length > 0);
+      return {
+        ...prev,
+        offeringSettings: nextSettings,
+        lastUpdated: new Date().toISOString()
+      };
+    });
+  };
+
   const totalExpenses = Object.values(data.expenses).reduce((sum: number, val: number) => sum + (Number(val) || 0), 0);
   
   const totalPersonalExpenses = Object.values(data.personalExpenses || {}).reduce((sum: number, val: number) => sum + (Number(val) || 0), 0);
@@ -484,7 +534,8 @@ const App: React.FC = () => {
       reportExpenseNames: {}, 
       report2Expenses: {}, 
       report2Names: {}, 
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      offeringSettings: []
     });
     setCurrentFileName('');
     setOriginalReportTitle('연합성회 재정결산서');
@@ -740,23 +791,31 @@ const App: React.FC = () => {
               <span className="text-[15px] opacity-100 font-black uppercase tracking-widest block mb-1">누적 헌금 총액</span>
               <div className="text-3xl font-black tracking-tighter">₩{totalAccumulatedOffering.toLocaleString()}</div>
             </div>
-            {DAYS.map(day => (
-              <div key={day} className="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
+            {(data.offeringSettings || []).map(item => (
+              <div key={item.day} className="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
                 <div className="flex items-center mb-4">
-                  <h3 className={`text-base font-black w-20 ${day === '주일' ? 'text-rose-500' : 'text-stone-700'}`}>{day}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className={`text-base font-black shrink-0 ${item.day === '주일' ? 'text-rose-500' : 'text-stone-700'}`}>{item.day}</h3>
+                    <button 
+                      onClick={() => handleDeleteOfferingItem(item.day)} 
+                      className="text-stone-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 active:scale-110 transition-all flex items-center justify-center shrink-0"
+                      title="항목 삭제"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                   <div className="flex-1 text-right">
-                    <span className="text-xl font-black text-rose-500">₩{getDayTotalIncome(day).toLocaleString()}</span>
+                    <span className="text-xl font-black text-rose-500">₩{getDayTotalIncome(item.day).toLocaleString()}</span>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  {TIMES.map(time => {
-                    if (!isTimeValid(day, time)) return null;
-                    const timeTotal = getCountingTotal(day, time);
+                  {item.times.map(time => {
+                    const timeTotal = getCountingTotal(item.day, time);
                     return (
                       <div key={time} className="flex items-center py-2 border-t border-stone-50 first:border-t-0">
                         <span className="text-[13px] font-bold text-stone-600 w-20">{time}</span>
                         <div className="flex-1 text-right">
-                          <button onClick={() => setModal({ type: 'counting', isOpen: true, day, time })} className={`font-black text-[13px] transition-all inline-flex items-center active:scale-95 ${timeTotal > 0 ? 'text-stone-600' : 'text-stone-300'}`}>
+                          <button onClick={() => setModal({ type: 'counting', isOpen: true, day: item.day, time })} className={`font-black text-[13px] transition-all inline-flex items-center active:scale-95 ${timeTotal > 0 ? 'text-stone-600' : 'text-stone-300'}`}>
                             ₩{timeTotal.toLocaleString()}
                           </button>
                         </div>
@@ -766,6 +825,14 @@ const App: React.FC = () => {
                 </div>
               </div>
             ))}
+            <div className="pt-2">
+              <button 
+                onClick={() => setModal({ type: 'add_offering_item', isOpen: true })} 
+                className="w-full p-5 border-2 border-dashed border-orange-100 rounded-2xl text-stone-400 font-bold text-sm bg-white hover:bg-orange-50/50 transition-colors shadow-sm flex items-center justify-center gap-2"
+              >
+                <Plus size={18} /> 항목 추가
+              </button>
+            </div>
           </div>
         )}
 
@@ -775,23 +842,31 @@ const App: React.FC = () => {
               <span className="text-[15px] opacity-100 font-black uppercase tracking-widest block mb-1">누적 참석 인원</span>
               <div className="text-3xl font-black tracking-tighter">{totalAttendanceAll.toLocaleString()}명</div>
             </div>
-            {DAYS.map(day => (
-              <div key={day} className="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
+            {(data.offeringSettings || []).map(item => (
+              <div key={item.day} className="bg-white rounded-2xl border border-orange-100 p-6 shadow-sm">
                 <div className="flex items-center mb-4">
-                  <h3 className={`text-base font-black w-20 ${day === '주일' ? 'text-rose-500' : 'text-stone-700'}`}>{day}</h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className={`text-base font-black shrink-0 ${item.day === '주일' ? 'text-rose-500' : 'text-stone-700'}`}>{item.day}</h3>
+                    <button 
+                      onClick={() => handleDeleteOfferingItem(item.day)} 
+                      className="text-stone-300 hover:text-rose-500 p-1.5 rounded-lg hover:bg-rose-50 active:scale-110 transition-all flex items-center justify-center shrink-0"
+                      title="항목 삭제"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
                   <div className="flex-1 text-right">
-                    <span className="text-xl font-black text-amber-400">{getDayTotalAttendance(day).toLocaleString()}명</span>
+                    <span className="text-xl font-black text-amber-400">{getDayTotalAttendance(item.day).toLocaleString()}명</span>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  {TIMES.map(time => {
-                    if (!isTimeValid(day, time)) return null;
-                    const attendanceVal = Number(data.attendance[day]?.[time] || 0);
+                  {item.times.map(time => {
+                    const attendanceVal = Number(data.attendance[item.day]?.[time] || 0);
                     return (
                       <div key={time} className="flex items-center py-2 border-t border-stone-50 first:border-t-0">
                         <span className="text-[13px] font-bold text-stone-600 w-20">{time}</span>
                         <div className="flex-1 text-right">
-                          <button onClick={() => setModal({ type: 'attendance', isOpen: true, day, time })} className={`font-black text-[13px] transition-all inline-flex items-center active:scale-95 ${attendanceVal > 0 ? 'text-stone-600' : 'text-stone-300'}`}>
+                          <button onClick={() => setModal({ type: 'attendance', isOpen: true, day: item.day, time })} className={`font-black text-[13px] transition-all inline-flex items-center active:scale-95 ${attendanceVal > 0 ? 'text-stone-600' : 'text-stone-300'}`}>
                             {attendanceVal.toLocaleString()}명
                           </button>
                         </div>
@@ -801,6 +876,14 @@ const App: React.FC = () => {
                 </div>
               </div>
             ))}
+            <div className="pt-2">
+              <button 
+                onClick={() => setModal({ type: 'add_offering_item', isOpen: true })} 
+                className="w-full p-5 border-2 border-dashed border-orange-100 rounded-2xl text-stone-400 font-bold text-sm bg-white hover:bg-orange-50/50 transition-colors shadow-sm flex items-center justify-center gap-2"
+              >
+                <Plus size={18} /> 항목 추가
+              </button>
+            </div>
           </div>
         )}
 
@@ -1198,6 +1281,106 @@ const App: React.FC = () => {
             {modal.type === 'add_category' && (<div className="p-6"><h3 className="text-xl font-black text-stone-800 mb-4">새 지출 항목</h3><input id="newCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-rose-400" placeholder="항목 이름" autoFocus /><div className="flex gap-2"><button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => handleAddCategory((document.getElementById('newCat') as HTMLInputElement).value, false)} className="flex-1 py-4 bg-rose-400 text-white font-bold rounded-2xl shadow-lg shadow-rose-100 active:scale-95 transition-transform">추가</button></div></div>)}
             {modal.type === 'add_personal_category' && (<div className="p-6"><h3 className="text-xl font-black text-stone-800 mb-4">새 개인 항목</h3><input id="newPersonalCat" type="text" className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl font-bold mb-4 outline-none focus:border-indigo-400" placeholder="항목 이름" autoFocus /><div className="flex gap-2"><button onClick={() => setModal({ ...modal, isOpen: false })} className="flex-1 py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => handleAddCategory((document.getElementById('newPersonalCat') as HTMLInputElement).value, true)} className="flex-1 py-4 bg-indigo-500 text-white font-bold rounded-2xl shadow-lg shadow-indigo-100 active:scale-95 transition-transform">추가</button></div></div>)}
             {modal.type === 'delete_personal_category' && (<div className="p-8 text-center"><div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6"><Trash2 size={32} /></div><h3 className="text-xl font-black text-stone-800 mb-2">개인 항목 삭제</h3><p className="text-stone-500 text-sm mb-8">"{modal.category}" 개인 항목을 삭제하시겠습니까?</p><div className="grid grid-cols-2 gap-3"><button onClick={() => setModal({ ...modal, isOpen: false })} className="py-4 bg-stone-100 text-stone-500 font-bold rounded-2xl active:bg-stone-200">취소</button><button onClick={() => handleDeleteCategory(modal.category!, true)} className="py-4 bg-rose-500 text-white font-bold rounded-2xl active:bg-rose-600">전체 삭제</button></div></div>)}
+            {modal.type === 'add_offering_item' && (
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h3 className="text-xl font-black text-stone-800">새 일정 및 시간대 추가</h3>
+                    <p className="text-xs font-bold text-rose-400">요일 선택 및 시간대 설정</p>
+                  </div>
+                  <button onClick={() => { setModal({ ...modal, isOpen: false }); setNewOfferingDay(''); setNewOfferingTimes([]); }} className="p-2 bg-stone-50 text-stone-400 rounded-full"><X size={20} /></button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1 font-bold">요일 선택</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['주일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'].map(preset => {
+                        const isDaySelected = newOfferingDay === preset;
+                        return (
+                          <button
+                            key={preset}
+                            type="button"
+                            onClick={() => setNewOfferingDay(preset)}
+                            className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${isDaySelected ? 'bg-orange-100 border-orange-200 text-orange-600 font-extrabold shadow-sm' : 'bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100'}`}
+                          >
+                            {preset}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-black text-stone-400 uppercase tracking-widest pl-1 font-bold">시간대 선택 (중복 설정 가능)</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['새벽', '낮', '저녁'].map(time => {
+                        const isSelected = newOfferingTimes.includes(time);
+                        return (
+                          <button
+                            key={time}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                setNewOfferingTimes(prev => prev.filter(t => t !== time));
+                              } else {
+                                setNewOfferingTimes(prev => [...prev, time]);
+                              }
+                            }}
+                            className={`py-3.5 rounded-2xl font-bold border transition-all text-sm ${isSelected ? 'bg-rose-400 border-rose-400 text-white shadow-md shadow-rose-100' : 'bg-stone-50 border-stone-100 text-stone-500 hover:bg-stone-100'}`}
+                          >
+                            {time}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {newOfferingDay.trim() && newOfferingTimes.length === 0 && (
+                    <p className="text-xs text-rose-400 font-bold pl-1 flex items-center gap-1">
+                      <AlertCircle size={12} /> 시간대를 최소 하나 이상 선택해주세요.
+                    </p>
+                  )}
+
+                  <button 
+                    onClick={() => {
+                      const dayStr = newOfferingDay.trim();
+                      if (!dayStr) { alert('요일을 선택해주세요.'); return; }
+                      if (newOfferingTimes.length === 0) { alert('시간대를 하나 이상 선택해주세요.'); return; }
+
+                      setData(prev => {
+                        const currentSettings = prev.offeringSettings || [];
+                        const existingIdx = currentSettings.findIndex(item => item.day === dayStr);
+                        let nextSettings = [...currentSettings];
+
+                        if (existingIdx > -1) {
+                          const uniqueTimes = Array.from(new Set([...currentSettings[existingIdx].times, ...newOfferingTimes]));
+                          nextSettings[existingIdx] = { ...currentSettings[existingIdx], times: uniqueTimes };
+                        } else {
+                          nextSettings.push({ day: dayStr, times: [...newOfferingTimes] });
+                        }
+
+                        // Order the settings according to typical Korean week schedule or input order
+                        // Since we just append new day, we keep the order
+                        return {
+                          ...prev,
+                          offeringSettings: nextSettings,
+                          lastUpdated: new Date().toISOString()
+                        };
+                      });
+
+                      setNewOfferingDay('');
+                      setNewOfferingTimes([]);
+                      setModal({ ...modal, isOpen: false });
+                    }}
+                    disabled={!newOfferingDay.trim() || newOfferingTimes.length === 0}
+                    className={`w-full mt-6 py-4 font-black rounded-2xl shadow-lg transition-all active:scale-95 ${(!newOfferingDay.trim() || newOfferingTimes.length === 0) ? 'bg-stone-200 text-stone-400 cursor-not-allowed shadow-none' : 'bg-rose-400 text-white shadow-rose-100'}`}
+                  >
+                    등록 완료
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
